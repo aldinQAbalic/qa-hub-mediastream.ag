@@ -407,6 +407,20 @@ export default {
         }
 
         // ===== Reporting (Jira sprint) =====
+        // Lagana ruta - samo naziv aktivnog sprinta (za Workspace quick-nav karticu)
+        if (pathname === "/api/reporting/sprint-name" && request.method === "GET") {
+          if (!env.JIRA_BASE_URL || !env.JIRA_EMAIL || !env.JIRA_API_TOKEN || !env.JIRA_BOARD_ID) {
+            return json({ sprint: null });
+          }
+          try {
+            const sprintData = await jiraFetch(env, `/rest/agile/1.0/board/${env.JIRA_BOARD_ID}/sprint?state=active`);
+            const sprint = (sprintData.values || [])[0];
+            return json({ sprint: sprint ? { id: sprint.id, name: sprint.name } : null });
+          } catch (_) {
+            return json({ sprint: null });
+          }
+        }
+
         if (pathname === "/api/reporting/sprint" && request.method === "GET") {
           if (!env.JIRA_BASE_URL || !env.JIRA_EMAIL || !env.JIRA_API_TOKEN || !env.JIRA_BOARD_ID) {
             return json({ error: "Jira integracija nije podešena (nedostaju JIRA_* env varijable)." }, 400);
