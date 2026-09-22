@@ -161,6 +161,33 @@
 
   /* ---- Date track (kalendar traka na home ekranu) ---- */
   .date-track-wrap { margin-bottom: 22px; }
+
+  /* ---- Bug Sweep animacija (prikazuje se jednom po sesiji prije kalendara) ---- */
+  .bug-sweep-wrap { margin-bottom: 22px; transition: opacity .4s ease; }
+  .bug-sweep-wrap.fade-out { opacity: 0; }
+  .bug-sweep-track { position: relative; height: 46px; display: flex; align-items: center; }
+  .bug-sweep-row {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; padding: 0 20px;
+  }
+  .bug-item { font-size: 22px; transition: transform .25s ease; position: relative; }
+  .bug-item::after {
+    content: '✅'; position: absolute; left: 0; top: 0; opacity: 0; transform: scale(0.5);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .bug-item.checked { opacity: 0; }
+  .bug-item.checked::after { opacity: 1; transform: scale(1); }
+  .bug-sweep-glass {
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 26px; z-index: 2;
+  }
+  @keyframes bugSweepMove {
+    0% { left: 0%; }
+    100% { left: calc(100% - 28px); }
+  }
+  .bug-sweep-status {
+    text-align: center; color: var(--muted); font-size: 13px; font-weight: 600; margin-top: 10px;
+  }
+  .bug-sweep-status.done { color: var(--green); }
   .date-track-row { display: flex; align-items: center; gap: 8px; }
   .date-track-arrow {
     flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: none;
@@ -173,15 +200,18 @@
   .quick-nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
   .quick-nav-card {
     background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-    padding: 44px 20px; text-align: center; cursor: pointer; transition: border-color .15s ease, transform .12s ease;
+    padding: 30px 20px 24px; text-align: center; cursor: pointer; transition: border-color .15s ease, transform .12s ease;
+    display: flex; flex-direction: column; align-items: center; min-height: 230px;
   }
   .quick-nav-card:hover { border-color: var(--blue); transform: translateY(-2px); }
   .quick-nav-icon {
     width: 68px; height: 68px; border-radius: 50%; border: 2px solid var(--blue);
     display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 26px;
   }
-  .quick-nav-title { font-weight: 800; font-size: 13px; letter-spacing: .5px; margin-bottom: 4px; }
-  .quick-nav-sub { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  .quick-nav-title { font-weight: 800; font-size: 13px; letter-spacing: .5px; margin-bottom: 0; }
+  .quick-nav-bottom { margin-top: auto; padding-top: 20px; width: 100%; }
+  .quick-nav-label { color: var(--text); font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .quick-nav-sub { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
   .quick-nav-open { color: #7c93ff; font-size: 13px; font-weight: 700; }
   .date-track-scroll {
     flex: 1; overflow-x: auto; padding: 4px 2px 8px; scroll-behavior: smooth;
@@ -546,7 +576,24 @@
         <h1>Workspace</h1>
       </div>
 
-      <div class="date-track-wrap">
+      <div class="bug-sweep-wrap hidden" id="bugSweepWrap">
+        <div class="bug-sweep-track">
+          <div class="bug-sweep-glass" id="bugSweepGlass">🔍</div>
+          <div class="bug-sweep-row">
+            <span class="bug-item">🐛</span>
+            <span class="bug-item">🐛</span>
+            <span class="bug-item">🐛</span>
+            <span class="bug-item">🐛</span>
+            <span class="bug-item">🐛</span>
+            <span class="bug-item">🐛</span>
+            <span class="bug-item">🐛</span>
+            <span class="bug-item">🐛</span>
+          </div>
+        </div>
+        <div class="bug-sweep-status" id="bugSweepStatus">Running regression suite...</div>
+      </div>
+
+      <div class="date-track-wrap hidden" id="dateTrackWrapReal">
         <div class="date-track-row">
           <button class="date-track-arrow" id="dateTrackPrev" aria-label="Prethodno">‹</button>
           <div class="date-track-scroll" id="dateTrackScroll">
@@ -560,35 +607,32 @@
         <div class="quick-nav-card" id="qnSprint">
           <div class="quick-nav-icon">📊</div>
           <div class="quick-nav-title">SPRINT</div>
-          <div class="quick-nav-sub" id="qnSprintSub">Current Sprint</div>
-          <div class="quick-nav-open">Open →</div>
+          <div class="quick-nav-bottom">
+            <div class="quick-nav-label">Current sprint:</div>
+            <div class="quick-nav-sub" id="qnSprintSub">Current Sprint</div>
+            <div class="quick-nav-open">Open →</div>
+          </div>
         </div>
         <div class="quick-nav-card" id="qnRelease">
           <div class="quick-nav-icon">🚀</div>
           <div class="quick-nav-title">RELEASE</div>
-          <div class="quick-nav-sub" id="qnReleaseSub">Next Release</div>
-          <div class="quick-nav-open">Open →</div>
+          <div class="quick-nav-bottom">
+            <div class="quick-nav-label">Next Release:</div>
+            <div class="quick-nav-sub" id="qnReleaseSub">Next Release</div>
+            <div class="quick-nav-open">Open →</div>
+          </div>
         </div>
         <div class="quick-nav-card" id="qnTestSuites">
           <div class="quick-nav-icon">🧪</div>
-          <div class="quick-nav-title">TEST SUITES</div>
-          <div class="quick-nav-sub">Test Suites Page</div>
-          <div class="quick-nav-open">Open →</div>
+          <div class="quick-nav-title">TEST SUITS</div>
+          <div class="quick-nav-bottom">
+            <div class="quick-nav-sub">Test Plans & Suits</div>
+            <div class="quick-nav-open">Open →</div>
+          </div>
         </div>
       </div>
 
       <div class="release-grid" id="releaseGrid"></div>
-
-      <div class="test-plans-section">
-        <div class="test-plans-header">
-          <div>
-            <h2>Test Plans</h2>
-            <p>Regression scope templates you can attach to any release.</p>
-          </div>
-          <button class="btn btn-primary" id="createTestPlanBtn" style="width:auto;">＋ Create test plan</button>
-        </div>
-        <div class="test-plans-list" id="testPlansList"></div>
-      </div>
     </div>
 
     <!-- ===== RELEASE DASHBOARD ===== -->
@@ -799,17 +843,14 @@
 
       <div class="release-header">
         <div>
-          <div class="eyebrow">TEST SUITES</div>
-          <h1 class="release-title" style="font-size:28px;">Test Suites Repository</h1>
-          <p class="release-desc">Coming soon — this page will host your reusable test suite repository.</p>
+          <div class="eyebrow">TEST SUITS</div>
+          <h1 class="release-title" style="font-size:28px;">Test Plans</h1>
+          <p class="release-desc">Regression scope templates you can attach to any release.</p>
         </div>
+        <button class="btn btn-primary" id="createTestPlanBtn" style="width:auto;">＋ Create test plan</button>
       </div>
 
-      <div class="fd-main-card" style="text-align:center; padding:60px 30px; color:var(--muted);">
-        <div style="font-size:32px; margin-bottom:12px;">🧪</div>
-        <div style="font-weight:700; color:var(--text); margin-bottom:6px;">Nothing here yet</div>
-        <div style="font-size:13px;">Let us know what this page should contain and we'll build it out.</div>
-      </div>
+      <div class="test-plans-list" id="testPlansList" style="margin-top:20px;"></div>
     </div><!-- /testSuitesView -->
   </main>
   <footer class="app-footer">
@@ -980,6 +1021,54 @@ async function showHome() {
   renderDateTrack();
   renderTestPlansList();
   loadSprintNameForQuickNav();
+  maybePlayBugSweep();
+}
+
+function maybePlayBugSweep() {
+  const sweepWrap = document.getElementById("bugSweepWrap");
+  const realWrap = document.getElementById("dateTrackWrapReal");
+
+  if (sessionStorage.getItem("bugSweepPlayed")) {
+    sweepWrap.classList.add("hidden");
+    realWrap.classList.remove("hidden");
+    renderDateTrack(); // ponovo skroluj na danas, sad kad je traka vidljiva
+    return;
+  }
+  sessionStorage.setItem("bugSweepPlayed", "1");
+
+  realWrap.classList.add("hidden");
+  sweepWrap.classList.remove("hidden");
+  sweepWrap.classList.remove("fade-out");
+
+  const glass = document.getElementById("bugSweepGlass");
+  const items = document.querySelectorAll("#bugSweepWrap .bug-item");
+  const statusEl = document.getElementById("bugSweepStatus");
+  statusEl.textContent = "Running regression suite...";
+  statusEl.classList.remove("done");
+  items.forEach(item => item.classList.remove("checked"));
+
+  const totalMs = 2400;
+  glass.style.animation = "none";
+  void glass.offsetWidth; // restart animacije
+  glass.style.animation = `bugSweepMove ${totalMs}ms ease-in-out forwards`;
+
+  items.forEach((item, i) => {
+    setTimeout(() => item.classList.add("checked"), Math.round(((i + 1) * totalMs) / items.length) - 150);
+  });
+
+  setTimeout(() => {
+    statusEl.textContent = "✓ All tests passed";
+    statusEl.classList.add("done");
+  }, totalMs);
+
+  setTimeout(() => {
+    sweepWrap.classList.add("fade-out");
+    setTimeout(() => {
+      sweepWrap.classList.add("hidden");
+      realWrap.classList.remove("hidden");
+      renderDateTrack(); // ponovo skroluj na danas, sad kad je traka vidljiva
+    }, 400);
+  }, totalMs + 700);
 }
 
 async function loadSprintNameForQuickNav() {
@@ -1695,6 +1784,7 @@ function openTestSuitesView() {
   document.getElementById("settingsView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("testSuitesView").classList.remove("hidden");
+  renderTestPlansList();
 }
 document.getElementById("tsCrumbWorkspace").addEventListener("click", showHome);
 document.getElementById("tsBackLink").addEventListener("click", showHome);
@@ -1914,11 +2004,7 @@ async function loadReportingSprint() {
 
 document.getElementById("openSettingsPageBtn").addEventListener("click", openSettingsPage);
 document.getElementById("sbWorkspace").addEventListener("click", showHome);
-document.getElementById("sbTestPlans").addEventListener("click", async () => {
-  await showHome();
-  const section = document.querySelector(".test-plans-section");
-  if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
-});
+document.getElementById("sbTestPlans").addEventListener("click", openTestSuitesView);
 document.getElementById("sbReporting").addEventListener("click", openReportingPage);
 document.getElementById("sbSettings").addEventListener("click", openSettingsPage);
 document.getElementById("sbLogout").addEventListener("click", async () => {
