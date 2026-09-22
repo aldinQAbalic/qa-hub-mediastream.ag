@@ -430,9 +430,8 @@ export default {
             const sprint = (sprintData.values || [])[0];
             if (!sprint) return json({ sprint: null, issues: [] });
 
-            const qaFieldId = await findJiraFieldId(env, "QA");
-            const fieldsParam = ["summary", "status", "fixVersions", "assignee", "reporter"];
-            if (qaFieldId) fieldsParam.push(qaFieldId);
+            const qaFieldIds = await findJiraFieldIds(env, "QA");
+            const fieldsParam = ["summary", "status", "fixVersions", "assignee", "reporter", ...qaFieldIds];
 
             // Jira vraca max 100 tiketa po pozivu - paginacija dok ne pokupimo sve
             let rawIssues = [];
@@ -449,17 +448,25 @@ export default {
               if (startAt >= total || !(page.issues || []).length) break;
             }
 
-            let issues = rawIssues.map(i => ({
-              key: i.key,
-              summary: i.fields.summary,
-              status: i.fields.status ? i.fields.status.name : "",
-              statusCategory: (i.fields.status && i.fields.status.statusCategory) ? i.fields.status.statusCategory.key : "new",
-              fixVersion: (i.fields.fixVersions && i.fields.fixVersions[0]) ? i.fields.fixVersions[0].name : "",
-              assignee: i.fields.assignee ? i.fields.assignee.displayName : "",
-              reporter: i.fields.reporter ? i.fields.reporter.displayName : "",
-              qaAssignee: qaFieldId ? extractJiraFieldDisplayValue(i.fields[qaFieldId]) : "",
-              url: `${env.JIRA_BASE_URL}/browse/${i.key}`,
-            }));
+            let issues = rawIssues.map(i => {
+              // Provjeri sva "QA" polja (ako ih Jira ima vise pod istim imenom) i uzmi prvo popunjeno
+              let qaAssignee = "";
+              for (const fid of qaFieldIds) {
+                const val = extractJiraFieldDisplayValue(i.fields[fid]);
+                if (val) { qaAssignee = val; break; }
+              }
+              return {
+                key: i.key,
+                summary: i.fields.summary,
+                status: i.fields.status ? i.fields.status.name : "",
+                statusCategory: (i.fields.status && i.fields.status.statusCategory) ? i.fields.status.statusCategory.key : "new",
+                fixVersion: (i.fields.fixVersions && i.fields.fixVersions[0]) ? i.fields.fixVersions[0].name : "",
+                assignee: i.fields.assignee ? i.fields.assignee.displayName : "",
+                reporter: i.fields.reporter ? i.fields.reporter.displayName : "",
+                qaAssignee,
+                url: `${env.JIRA_BASE_URL}/browse/${i.key}`,
+              };
+            });
 
             const showAll = url.searchParams.get("all") === "1";
             if (!showAll) {
@@ -474,14 +481,19 @@ export default {
             }
 
             // Cross-reference lokalne feature-e (po jira_key) da prikazemo nas test status
+            // (upit se dijeli u batch-eve jer D1/SQLite ima limit na broj SQL varijabli po upitu)
             let localByKey = {};
             if (issues.length) {
               const keys = issues.map(i => i.key);
-              const placeholders = keys.map(() => "?").join(",");
-              const { results } = await env.DB.prepare(
-                `SELECT jira_key, status, release_id FROM features WHERE jira_key IN (${placeholders})`
-              ).bind(...keys).all();
-              results.forEach(f => { localByKey[f.jira_key] = f; });
+              const BATCH_SIZE = 100;
+              for (let start = 0; start < keys.length; start += BATCH_SIZE) {
+                const batch = keys.slice(start, start + BATCH_SIZE);
+                const placeholders = batch.map(() => "?").join(",");
+                const { results } = await env.DB.prepare(
+                  `SELECT jira_key, status, release_id FROM features WHERE jira_key IN (${placeholders})`
+                ).bind(...batch).all();
+                results.forEach(f => { localByKey[f.jira_key] = f; });
+              }
             }
             issues.forEach(i => { i.local = localByKey[i.key] || null; });
 
@@ -523,13 +535,13 @@ async function jiraFetch(env, path) {
 }
 
 // Nalazi ID custom polja po nazivu (npr. "QA") - Jira interno koristi id-jeve tipa customfield_10045
-async function findJiraFieldId(env, fieldName) {
+async function findJiraFieldIds(env, fieldName) {
   try {
     const fields = await jiraFetch(env, "/rest/api/3/field");
-    const match = (fields || []).find(f => (f.name || "").toLowerCase().trim() === fieldName.toLowerCase().trim());
-    return match ? match.id : null;
+    const matches = (fields || []).filter(f => (f.name || "").toLowerCase().trim() === fieldName.toLowerCase().trim());
+    return matches.map(f => f.id);
   } catch (_) {
-    return null;
+    return [];
   }
 }
 
