@@ -409,7 +409,7 @@ export default {
         // ===== Reporting (Jira sprint) =====
         // Lagana ruta - samo naziv aktivnog sprinta (za Workspace quick-nav karticu)
         if (pathname === "/api/reporting/sprint-name" && request.method === "GET") {
-          if (!env.JIRA_BASE_URL || !env.JIRA_EMAIL || !env.JIRA_API_TOKEN || !env.JIRA_BOARD_ID) {
+          if (!env.JIRA_BASE_URL || !env.JIRA_API_TOKEN || !env.JIRA_BOARD_ID) {
             return json({ sprint: null });
           }
           try {
@@ -422,7 +422,7 @@ export default {
         }
 
         if (pathname === "/api/reporting/sprint" && request.method === "GET") {
-          if (!env.JIRA_BASE_URL || !env.JIRA_EMAIL || !env.JIRA_API_TOKEN || !env.JIRA_BOARD_ID) {
+          if (!env.JIRA_BASE_URL || !env.JIRA_API_TOKEN || !env.JIRA_BOARD_ID) {
             return json({ error: "Jira integracija nije podešena (nedostaju JIRA_* env varijable)." }, 400);
           }
           try {
@@ -523,9 +523,10 @@ function parseFeature(row) {
 async function jiraFetch(env, path) {
   const base = (env.JIRA_BASE_URL || "").replace(/\/+$/, "");
   const url = `${base}${path}`;
-  const auth = btoa(`${env.JIRA_EMAIL}:${env.JIRA_API_TOKEN}`);
+  // Jira Server/Data Center: Personal Access Token preko Bearer autentikacije
+  // (za razliku od Jira Cloud koji koristi Basic auth sa email + API token)
   const res = await fetch(url, {
-    headers: { Authorization: `Basic ${auth}`, Accept: "application/json" },
+    headers: { Authorization: `Bearer ${env.JIRA_API_TOKEN}`, Accept: "application/json" },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -537,7 +538,7 @@ async function jiraFetch(env, path) {
 // Nalazi ID custom polja po nazivu (npr. "QA") - Jira interno koristi id-jeve tipa customfield_10045
 async function findJiraFieldIds(env, fieldName) {
   try {
-    const fields = await jiraFetch(env, "/rest/api/3/field");
+    const fields = await jiraFetch(env, "/rest/api/2/field");
     const matches = (fields || []).filter(f => (f.name || "").toLowerCase().trim() === fieldName.toLowerCase().trim());
     return matches.map(f => f.id);
   } catch (_) {
