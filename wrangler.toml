@@ -1,4 +1,4 @@
-name = "qa-release-hub"
+name = "qa-release-hub-projectb"
 main = "src/index.js"
 compatibility_date = "2024-09-01"
 
@@ -8,12 +8,11 @@ binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "qa-release-hub-db"
-database_id = "70e7649f-cb47-4e6b-941b-e0f6ba4b6130"
+database_name = "qa-release-hub-projectb-db"
+database_id = "0a5aefed-f809-45b8-abac-60ed7742cd02"
 
 [vars]
-JIRA_BASE_URL = "https://mediastreamag.atlassian.net"
-JIRA_EMAIL = "aldin.balic@mediastream.ag"
-JIRA_BOARD_ID = "84"
+JIRA_BASE_URL = "https://collaboration.msi.audi.com/jira"
+JIRA_BOARD_ID = "12686"
 # JIRA_API_TOKEN se NE stavlja ovdje (nije sigurno u wrangler.toml) -
 # postavlja se preko: wrangler secret put JIRA_API_TOKEN
