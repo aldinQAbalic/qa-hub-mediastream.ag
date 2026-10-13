@@ -1,4 +1,4 @@
-name = "qa-release-hub-projectb"
+name = "qa-hub-mediastream"
 main = "src/index.js"
 compatibility_date = "2024-09-01"
 
@@ -8,8 +8,8 @@ binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "qa-release-hub-projectb-db"
-database_id = "0a5aefed-f809-45b8-abac-60ed7742cd02"
+database_name = "qa-hub-mediastream-db"
+database_id = "beb7df44-26c8-4279-8ed5-dea331d40aca"
 
 [vars]
 JIRA_BASE_URL = "https://collaboration.msi.audi.com/jira"
