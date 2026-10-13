@@ -849,14 +849,14 @@
         <button class="btn btn-primary" id="plNewTcBtn" style="width:auto;">＋ Novi test case</button>
       </div>
 
-      <div class="pl-toolbar">
+      <form class="pl-toolbar" id="plFilterForm" autocomplete="off" onsubmit="return false;">
         <div class="pl-chip-row" id="plModuleChips"></div>
         <select id="plTypeFilter" aria-label="Tip">
           <option value="">Svi tipovi</option>
           <option>Pozitivni</option><option>Negativni</option><option>Granične vrijednosti</option><option>UI/UX</option><option>Sigurnost</option>
         </select>
         <input id="plSearch" name="pl-tc-search" type="search" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="Traži po ID-u ili naslovu…" />
-      </div>
+      </form>
 
       <div id="plList"></div>
     </div><!-- /playerView -->
@@ -876,10 +876,13 @@
 
     <div class="fd-main-card" style="max-width:460px;">
       <div class="fd-label" style="margin-bottom:14px;">CHANGE PASSWORD</div>
-      <div class="field"><label>Current password</label><input type="password" id="setCpCurrent" /></div>
-      <div class="field"><label>New password</label><input type="password" id="setCpNew" /></div>
+      <form id="setCpForm" onsubmit="return false;">
+      <input type="text" id="setCpUsername" autocomplete="username" readonly tabindex="-1" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" />
+      <div class="field"><label>Current password</label><input type="password" id="setCpCurrent" autocomplete="current-password" /></div>
+      <div class="field"><label>New password</label><input type="password" id="setCpNew" autocomplete="new-password" /></div>
       <div class="error-msg" id="setCpError"></div>
-      <button class="btn btn-primary" id="setCpConfirm" style="width:auto; margin-top:6px;">Save password</button>
+      <button type="button" class="btn btn-primary" id="setCpConfirm" style="width:auto; margin-top:6px;">Save password</button>
+      </form>
     </div>
   </div><!-- /settingsView -->
 
@@ -1940,6 +1943,7 @@ function openPlayerView() {
   document.getElementById("playerView").classList.remove("hidden");
   // Browser zna autofillati username u polje za pretragu - očisti ga pri svakom otvaranju
   document.getElementById("plSearch").value = "";
+  plSearchTyped = false;
   loadPlayerTcs();
 }
 document.getElementById("plCrumbWorkspace").addEventListener("click", showHome);
@@ -2077,6 +2081,7 @@ function openSettingsPage() {
   document.getElementById("playerView").classList.add("hidden");
   document.getElementById("reportingView").classList.add("hidden");
   document.getElementById("settingsView").classList.remove("hidden");
+  document.getElementById("setCpUsername").value = currentUser ? currentUser.username : "";
   document.getElementById("setCpCurrent").value = "";
   document.getElementById("setCpNew").value = "";
   document.getElementById("setCpError").textContent = "";
@@ -2199,6 +2204,7 @@ let plOpenId = null;
 const plFullCache = {};     // id -> pun TC (sa slikama)
 let plEditingId = null;
 let plFormImages = [];      // [{ src, caption }]
+let plSearchTyped = false;  // true tek kad korisnik sam kuca u pretragu
 
 function plTypeClass(t) {
   if (t === "Granične vrijednosti") return "t-Granicne";
@@ -2224,6 +2230,7 @@ function renderPlayerTcs() {
   chips.innerHTML = "";
   ["", ...modules].forEach(m => {
     const b = document.createElement("button");
+    b.type = "button";
     b.className = "pl-chip" + (m === plModule ? " active" : "");
     const count = m ? plTcs.filter(t => t.module === m).length : plTcs.length;
     b.textContent = `${m || "Svi"} (${count})`;
@@ -2232,7 +2239,10 @@ function renderPlayerTcs() {
   });
   document.getElementById("plModuleList").innerHTML = modules.map(m => `<option value="${escapeHtml(m)}">`).join("");
 
-  const q = document.getElementById("plSearch").value.trim().toLowerCase();
+  const searchEl = document.getElementById("plSearch");
+  // Ako je browser sam upisao username (autofill), a korisnik nije kucao - očisti
+  if (!plSearchTyped && currentUser && searchEl.value.trim().toLowerCase() === currentUser.username.toLowerCase()) searchEl.value = "";
+  const q = searchEl.value.trim().toLowerCase();
   const type = document.getElementById("plTypeFilter").value;
   const list = plTcs.filter(t =>
     (!plModule || t.module === plModule) &&
@@ -2449,6 +2459,7 @@ document.getElementById("plTcSave").addEventListener("click", async () => {
 document.getElementById("plTcCancel").addEventListener("click", closePlayerTcModal);
 document.getElementById("plTcClose").addEventListener("click", closePlayerTcModal);
 document.getElementById("plNewTcBtn").addEventListener("click", () => openPlayerTcModal(null));
+document.getElementById("plSearch").addEventListener("keydown", () => { plSearchTyped = true; });
 document.getElementById("plSearch").addEventListener("input", renderPlayerTcs);
 document.getElementById("plTypeFilter").addEventListener("change", renderPlayerTcs);
 

@@ -67,7 +67,6 @@ Korisnik nije prijavljen.', '["U First name pokušaj unijeti vrijednosti iz test
 Zabranjeno: Anna7, Anna!, Anna@, <script>', 'Slova (i sa dijakriticima), razmak, crtica i apostrof su dozvoljeni.
 Cifre i specijalni znakovi se ne mogu unijeti (polje ih odbija) ili se prikazuje poruka greške.
 Na stagingu je cifra odbijena pri kucanju.', '[]', 9, 'Claude');
-INSERT INTO player_test_cases (module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, images, order_index, created_by) VALUES ('Registracija', 'REG-011', 'Maksimalne dužine polja', 'Granične vrijednosti', 'Low', 'Otvoren staging-2 Safebet Austria: https://www.staging-2.safebet.at/en-at/registration
 Korisnik nije prijavljen.', '["U svako polje unesi tekst tačno maksimalne dužine.", "Pokušaj unijeti još jedan znak.", "Pošalji formu sa vrijednostima maksimalne dužine."]', 'First name 30, Last name 30, Email 40, Postcode 10, City 40, Address 255, Password 200 znakova', 'Polja ne dozvoljavaju unos preko limita.
 Registracija sa vrijednostima maksimalne dužine prolazi i podaci se ne skraćuju.
 Napomena: limit emaila od 40 znakova je kratak za neke stvarne adrese, provjeriti sa PO.', '[]', 10, 'Claude');
