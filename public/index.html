@@ -855,7 +855,7 @@
           <option value="">Svi tipovi</option>
           <option>Pozitivni</option><option>Negativni</option><option>Granične vrijednosti</option><option>UI/UX</option><option>Sigurnost</option>
         </select>
-        <input id="plSearch" type="search" placeholder="Traži po ID-u ili naslovu…" />
+        <input id="plSearch" name="pl-tc-search" type="search" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="Traži po ID-u ili naslovu…" />
       </div>
 
       <div id="plList"></div>
@@ -1938,6 +1938,8 @@ function openPlayerView() {
   document.getElementById("reportingView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("playerView").classList.remove("hidden");
+  // Browser zna autofillati username u polje za pretragu - očisti ga pri svakom otvaranju
+  document.getElementById("plSearch").value = "";
   loadPlayerTcs();
 }
 document.getElementById("plCrumbWorkspace").addEventListener("click", showHome);
