@@ -475,6 +475,8 @@
   .pl-text { font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
   .pl-steps { margin: 0; padding-left: 22px; font-size: 14px; line-height: 1.6; }
   .pl-expected { background: var(--green-soft); border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 6px; }
+  .pl-admin { background: #f4f6fb; color: #111827; border-left: 3px solid var(--blue); padding: 12px 14px; border-radius: 6px; }
+  .pl-admin-title { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #3b4fd9; margin-bottom: 6px; text-transform: uppercase; }
   .pl-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
   .pl-shot { margin: 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: zoom-in; }
   .pl-shot img { width: 100%; display: block; }
@@ -1061,6 +1063,10 @@
     <div class="field">
       <label>Očekivani rezultat</label>
       <textarea id="plFExpected" rows="3"></textarea>
+    </div>
+    <div class="field">
+      <label>Provjera u admin panelu <span class="optional-tag">šta provjeriti u back-officeu, ne samo na frontendu</span></label>
+      <textarea id="plFAdmin" rows="3" placeholder="npr. Igrač postoji, podaci se poklapaju, status naloga…"></textarea>
     </div>
     <div class="field">
       <label>Slike <span class="optional-tag">zalijepi (Ctrl+V), prevuci ili odaberi</span></label>
@@ -2312,6 +2318,7 @@ async function fillPlayerTcBody(el, id) {
     sec("Koraci", steps.length ? `<ol class="pl-steps">${steps.map(s => `<li>${escapeHtml(s)}</li>`).join("")}</ol>` : "") +
     sec("Test podaci", tc.test_data ? `<div class="pl-text">${escapeHtml(tc.test_data)}</div>` : "") +
     sec("Očekivani rezultat", tc.expected ? `<div class="pl-text pl-expected">${escapeHtml(tc.expected)}</div>` : "") +
+    (tc.admin_check ? `<div class="pl-section"><div class="pl-admin"><div class="pl-admin-title">🛠 Provjeri u admin panelu</div><div class="pl-text">${escapeHtml(tc.admin_check)}</div></div></div>` : "") +
     sec("Slike", images.length ? `<div class="pl-gallery">${images.map((im, i) =>
       `<figure class="pl-shot" data-i="${i}"><img src="${escapeHtml(im.src)}" alt="${escapeHtml(im.caption || "")}" loading="lazy" />${im.caption ? `<figcaption>${escapeHtml(im.caption)}</figcaption>` : ""}</figure>`).join("")}</div>` : "") +
     `<div class="pl-label" style="text-transform:none; letter-spacing:0; font-weight:500;">Napisao: ${escapeHtml(tc.created_by || "—")} · zadnja izmjena ${escapeHtml(tc.updated_at || "")}</div>
@@ -2352,6 +2359,7 @@ function openPlayerTcModal(tc) {
   document.getElementById("plFSteps").value = tc ? plParse(tc.steps, []).join("\n") : "";
   document.getElementById("plFData").value = tc ? tc.test_data : "";
   document.getElementById("plFExpected").value = tc ? tc.expected : "";
+  document.getElementById("plFAdmin").value = tc ? (tc.admin_check || "") : "";
   plFormImages = tc ? plParse(tc.images, []).map(i => ({ ...i })) : [];
   document.getElementById("plTcError").textContent = "";
   renderPlThumbs();
@@ -2433,6 +2441,7 @@ document.getElementById("plTcSave").addEventListener("click", async () => {
     steps: document.getElementById("plFSteps").value.split("\n").map(s => s.trim()).filter(Boolean),
     test_data: document.getElementById("plFData").value.trim(),
     expected: document.getElementById("plFExpected").value.trim(),
+    admin_check: document.getElementById("plFAdmin").value.trim(),
     images: plFormImages.filter(i => i.src),
   };
   if (!body.module || !body.title) { errEl.textContent = "Modul i naslov su obavezni."; return; }
