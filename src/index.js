@@ -11,6 +11,7 @@
 //   POST /api/releases/:id/features { name, jira_key?, jira_url?, reporter?, applications? }
 //   PATCH /api/features/:id         { any of: name, status, tested_by, bugs, applications, working_on_it }
 //   DELETE /api/features/:id
+//   GET/POST /api/player-tcs, GET/PUT/DELETE /api/player-tcs/:id  (Player TC kartice)
 //
 // Statika (public/index.html) servira se preko Workers Assets configa u wrangler.toml.
 
@@ -376,6 +377,62 @@ export default {
           return json({ ok: true });
         }
 
+        // ===== Player: detaljni test caseovi =====
+        // images = JSON niz { src, caption }; src je ili staticki put (/player-guide/...) ili data URL (upload iz UI-a)
+        if (pathname === "/api/player-tcs" && request.method === "GET") {
+          const { results } = await env.DB.prepare(
+            `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected,
+                    json_array_length(images) as image_count, order_index, created_by, updated_at
+             FROM player_test_cases ORDER BY module, order_index, id`
+          ).all();
+          return json(results);
+        }
+        if (pathname === "/api/player-tcs" && request.method === "POST") {
+          const body = await request.json();
+          const err = validatePlayerTc(body);
+          if (err) return json({ error: err }, 400);
+          const countRow = await env.DB.prepare(
+            `SELECT COALESCE(MAX(order_index), -1) + 1 as n FROM player_test_cases WHERE module = ?`
+          ).bind(body.module.trim()).first();
+          const { meta } = await env.DB.prepare(
+            `INSERT INTO player_test_cases (module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, images, order_index, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ).bind(
+            body.module.trim(), (body.tc_code || "").trim(), body.title.trim(), body.tc_type || "Pozitivni", body.priority || "Medium",
+            body.preconditions || "", JSON.stringify(body.steps || []), body.test_data || "", body.expected || "",
+            JSON.stringify(body.images || []), countRow.n, user.display_name
+          ).run();
+          return json({ id: meta.last_row_id });
+        }
+        const playerTcMatch = pathname.match(/^\/api\/player-tcs\/(\d+)$/);
+        if (playerTcMatch && request.method === "GET") {
+          const tc = await env.DB.prepare(`SELECT * FROM player_test_cases WHERE id = ?`).bind(playerTcMatch[1]).first();
+          if (!tc) return json({ error: "Test case nije pronađen" }, 404);
+          return json(tc);
+        }
+        if (playerTcMatch && request.method === "PUT") {
+          const body = await request.json();
+          const err = validatePlayerTc(body);
+          if (err) return json({ error: err }, 400);
+          const { meta } = await env.DB.prepare(
+            `UPDATE player_test_cases SET module = ?, tc_code = ?, title = ?, tc_type = ?, priority = ?, preconditions = ?,
+               steps = ?, test_data = ?, expected = ?, images = ?, updated_at = datetime('now') WHERE id = ?`
+          ).bind(
+            body.module.trim(), (body.tc_code || "").trim(), body.title.trim(), body.tc_type || "Pozitivni", body.priority || "Medium",
+            body.preconditions || "", JSON.stringify(body.steps || []), body.test_data || "", body.expected || "",
+            JSON.stringify(body.images || []), playerTcMatch[1]
+          ).run();
+          if (!meta.changes) return json({ error: "Test case nije pronađen" }, 404);
+          return json({ ok: true });
+        }
+        if (playerTcMatch && request.method === "DELETE") {
+          if (user.username !== "aldin") {
+            return json({ error: "Samo administrator (aldin) može brisati test caseove" }, 403);
+          }
+          await env.DB.prepare(`DELETE FROM player_test_cases WHERE id = ?`).bind(playerTcMatch[1]).run();
+          return json({ ok: true });
+        }
+
         // ===== Regression scope (po release-u) =====
         const scopeListMatch = pathname.match(/^\/api\/releases\/(\d+)\/scope$/);
         if (scopeListMatch && request.method === "GET") {
@@ -557,6 +614,22 @@ function extractJiraFieldDisplayValue(value) {
     return value.displayName || value.name || value.value || "";
   }
   return "";
+}
+
+// Validacija tijela za Player TC (POST/PUT). Vraća poruku greške ili null.
+const PLAYER_TC_TYPES = ["Pozitivni", "Negativni", "Granične vrijednosti", "UI/UX", "Sigurnost"];
+const PLAYER_TC_PRIORITIES = ["High", "Medium", "Low"];
+function validatePlayerTc(b) {
+  if (!b || typeof b !== "object") return "Neispravan zahtjev";
+  if (!b.title || !String(b.title).trim()) return "Naslov je obavezan";
+  if (!b.module || !String(b.module).trim()) return "Modul je obavezan";
+  if (b.tc_type && !PLAYER_TC_TYPES.includes(b.tc_type)) return "Nepoznat tip test casea";
+  if (b.priority && !PLAYER_TC_PRIORITIES.includes(b.priority)) return "Nepoznat prioritet";
+  if (b.steps && (!Array.isArray(b.steps) || b.steps.some(s => typeof s !== "string"))) return "Koraci moraju biti lista teksta";
+  if (b.images && (!Array.isArray(b.images) || b.images.some(i => !i || typeof i.src !== "string"))) return "Neispravne slike";
+  const imagesSize = JSON.stringify(b.images || []).length;
+  if (imagesSize > 1800000) return "Slike su prevelike (max ~1.8 MB ukupno po test caseu)";
+  return null;
 }
 
 function extractJiraKey(url) {

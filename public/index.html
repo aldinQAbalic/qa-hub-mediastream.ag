@@ -440,6 +440,65 @@
     padding: 24px 0; margin-top: 40px; border-top: 1px solid var(--border);
   }
   .app-footer-logo { width: 60px; height: auto; opacity: 0.85; }
+
+  /* ---- Player: TC kartice ---- */
+  .pl-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 20px 0 16px; }
+  .pl-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pl-chip {
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .pl-chip.active { border-color: var(--blue); color: var(--text); background: var(--blue-soft); }
+  .pl-toolbar input, .pl-toolbar select, .modal .field select {
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2);
+    color: var(--text); font-size: 13px; font-family: inherit;
+  }
+  .pl-toolbar input { flex: 1; min-width: 180px; }
+  .pl-group-title { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--muted); margin: 22px 0 10px; text-transform: uppercase; }
+  .pl-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  .pl-card.open { border-color: var(--blue); }
+  .pl-card-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+  .pl-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: #7c93ff; font-weight: 700; min-width: 64px; }
+  .pl-title { flex: 1; font-weight: 600; font-size: 14px; min-width: 0; }
+  .pl-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .pl-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--gray-soft); color: var(--muted); white-space: nowrap; }
+  .pl-badge.t-Pozitivni { background: var(--green-soft); color: var(--green); }
+  .pl-badge.t-Negativni { background: var(--red-soft); color: var(--red); }
+  .pl-badge.t-Granicne { background: var(--amber-soft); color: var(--amber); }
+  .pl-badge.t-UI { background: var(--blue-soft); color: #7c93ff; }
+  .pl-badge.p-High { color: var(--red); }
+  .pl-badge.p-Medium { color: var(--amber); }
+  .pl-badge.p-Low { color: var(--muted); }
+  .pl-body { border-top: 1px solid var(--border); padding: 16px 18px 18px; }
+  .pl-section { margin-bottom: 14px; }
+  .pl-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+  .pl-text { font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+  .pl-steps { margin: 0; padding-left: 22px; font-size: 14px; line-height: 1.6; }
+  .pl-expected { background: var(--green-soft); border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 6px; }
+  .pl-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .pl-shot { margin: 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: zoom-in; }
+  .pl-shot img { width: 100%; display: block; }
+  .pl-shot figcaption { font-size: 12px; color: var(--muted); padding: 8px 10px; }
+  .pl-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+  .pl-actions .btn { width: auto; padding: 8px 14px; font-size: 13px; }
+  .pl-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; cursor: zoom-out; }
+  .pl-lightbox img { max-width: 100%; max-height: 85vh; border-radius: 8px; }
+  .pl-lightbox div { color: #ddd; font-size: 13px; margin-top: 10px; }
+  .pl-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pl-drop { border: 1.5px dashed var(--border); border-radius: 10px; padding: 14px; text-align: center; color: var(--muted); font-size: 13px; }
+  .pl-drop.drag { border-color: var(--blue); color: var(--text); }
+  .pl-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .pl-thumb { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative; }
+  .pl-thumb img { width: 100%; height: 90px; object-fit: cover; display: block; }
+  .pl-thumb input { width: 100%; border: none !important; border-top: 1px solid var(--border) !important; border-radius: 0 !important; padding: 6px 8px !important; font-size: 12px !important; }
+  .pl-thumb button { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; padding: 2px 6px; }
+  @media (max-width: 700px) {
+    .quick-nav-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pl-card-head { flex-wrap: wrap; }
+    .pl-title { flex-basis: 100%; order: 3; }
+    .pl-row2 { grid-template-columns: 1fr; }
+    .modal-wide { width: calc(100vw - 32px); }
+  }
 </style>
 </head>
 <body>
@@ -787,9 +846,19 @@
           <h1 class="release-title" style="font-size:28px;">Player</h1>
           <p class="release-desc">Test caseovi i vodiči za sve što se tiče igrača: registracija, login, profil.</p>
         </div>
+        <button class="btn btn-primary" id="plNewTcBtn" style="width:auto;">＋ Novi test case</button>
       </div>
 
-      <div class="test-plan-empty" style="margin-top:20px;">Još nema sadržaja na ovoj stranici.</div>
+      <div class="pl-toolbar">
+        <div class="pl-chip-row" id="plModuleChips"></div>
+        <select id="plTypeFilter" aria-label="Tip">
+          <option value="">Svi tipovi</option>
+          <option>Pozitivni</option><option>Negativni</option><option>Granične vrijednosti</option><option>UI/UX</option><option>Sigurnost</option>
+        </select>
+        <input id="plSearch" type="search" placeholder="Traži po ID-u ili naslovu…" />
+      </div>
+
+      <div id="plList"></div>
     </div><!-- /playerView -->
   <!-- ===== SETTINGS (probna stranica sa sidebarom) ===== -->
   <div id="settingsView" class="hidden">
@@ -932,6 +1001,77 @@
     <div class="modal-actions">
       <button class="btn btn-secondary" id="cancelAttachTestPlan">Odustani</button>
       <button class="btn btn-primary" style="width:auto;" id="confirmAttachTestPlan">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Player TC modal -->
+<div id="plTcModal" class="modal-backdrop hidden">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3 id="plTcModalTitle">Novi test case</h3>
+      <button class="modal-close" id="plTcClose">✕</button>
+    </div>
+    <p class="modal-sub">Opiši korake tako da ih kolega može ponoviti bez pitanja.</p>
+
+    <div class="pl-row2">
+      <div class="field">
+        <label>Modul <span class="required-tag">obavezno</span></label>
+        <input id="plFModule" list="plModuleList" placeholder="npr. Registracija" />
+        <datalist id="plModuleList"></datalist>
+      </div>
+      <div class="field">
+        <label>TC ID <span class="optional-tag">opcionalno</span></label>
+        <input id="plFCode" placeholder="npr. REG-001" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Naslov <span class="required-tag">obavezno</span></label>
+      <input id="plFTitle" placeholder="npr. Uspješna registracija sa validnim podacima" />
+    </div>
+    <div class="pl-row2">
+      <div class="field">
+        <label>Tip</label>
+        <select id="plFType" style="width:100%;">
+          <option>Pozitivni</option><option>Negativni</option><option>Granične vrijednosti</option><option>UI/UX</option><option>Sigurnost</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Prioritet</label>
+        <select id="plFPriority" style="width:100%;">
+          <option>High</option><option selected>Medium</option><option>Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Preduslovi <span class="optional-tag">opcionalno</span></label>
+      <textarea id="plFPre" rows="2"></textarea>
+    </div>
+    <div class="field">
+      <label>Koraci <span class="optional-tag">jedan korak po redu</span></label>
+      <textarea id="plFSteps" rows="5" placeholder="Otvori stranicu registracije&#10;Popuni polje Email…"></textarea>
+    </div>
+    <div class="field">
+      <label>Test podaci <span class="optional-tag">opcionalno</span></label>
+      <textarea id="plFData" rows="2"></textarea>
+    </div>
+    <div class="field">
+      <label>Očekivani rezultat</label>
+      <textarea id="plFExpected" rows="3"></textarea>
+    </div>
+    <div class="field">
+      <label>Slike <span class="optional-tag">zalijepi (Ctrl+V), prevuci ili odaberi</span></label>
+      <div class="pl-drop" id="plDrop">
+        Zalijepi screenshot ovdje (Ctrl+V) ili <label for="plFFile" style="color:#7c93ff; cursor:pointer; display:inline;">odaberi fajl</label>
+        <input type="file" id="plFFile" accept="image/*" multiple class="hidden" />
+      </div>
+      <div class="pl-thumbs" id="plThumbs"></div>
+    </div>
+
+    <div class="modal-actions">
+      <span id="plTcError" style="color:var(--red); font-size:13px; margin-right:auto; align-self:center;"></span>
+      <button class="btn btn-secondary" id="plTcCancel">Odustani</button>
+      <button class="btn btn-primary" style="width:auto;" id="plTcSave">Sačuvaj</button>
     </div>
   </div>
 </div>
@@ -1798,6 +1938,7 @@ function openPlayerView() {
   document.getElementById("reportingView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("playerView").classList.remove("hidden");
+  loadPlayerTcs();
 }
 document.getElementById("plCrumbWorkspace").addEventListener("click", showHome);
 document.getElementById("plBackLink").addEventListener("click", showHome);
@@ -2049,6 +2190,266 @@ document.getElementById("qnRelease").addEventListener("click", () => {
 });
 document.getElementById("qnTestSuites").addEventListener("click", openTestSuitesView);
 document.getElementById("qnPlayer").addEventListener("click", openPlayerView);
+// ===== Player: detaljni test caseovi =====
+let plTcs = [];
+let plModule = "";          // "" = svi moduli
+let plOpenId = null;
+const plFullCache = {};     // id -> pun TC (sa slikama)
+let plEditingId = null;
+let plFormImages = [];      // [{ src, caption }]
+
+function plTypeClass(t) {
+  if (t === "Granične vrijednosti") return "t-Granicne";
+  if (t === "UI/UX") return "t-UI";
+  return "t-" + t;
+}
+
+async function loadPlayerTcs() {
+  try {
+    plTcs = await api("/api/player-tcs");
+  } catch (e) {
+    document.getElementById("plList").innerHTML =
+      `<div class="test-plan-empty">Ne mogu učitati test caseove: ${escapeHtml(e.message)}. Ako je ovo prvo pokretanje, pokreni migration-player-tcs.sql.</div>`;
+    return;
+  }
+  renderPlayerTcs();
+}
+
+function renderPlayerTcs() {
+  const modules = [...new Set(plTcs.map(t => t.module))];
+  if (plModule && !modules.includes(plModule)) plModule = "";
+  const chips = document.getElementById("plModuleChips");
+  chips.innerHTML = "";
+  ["", ...modules].forEach(m => {
+    const b = document.createElement("button");
+    b.className = "pl-chip" + (m === plModule ? " active" : "");
+    const count = m ? plTcs.filter(t => t.module === m).length : plTcs.length;
+    b.textContent = `${m || "Svi"} (${count})`;
+    b.addEventListener("click", () => { plModule = m; renderPlayerTcs(); });
+    chips.appendChild(b);
+  });
+  document.getElementById("plModuleList").innerHTML = modules.map(m => `<option value="${escapeHtml(m)}">`).join("");
+
+  const q = document.getElementById("plSearch").value.trim().toLowerCase();
+  const type = document.getElementById("plTypeFilter").value;
+  const list = plTcs.filter(t =>
+    (!plModule || t.module === plModule) &&
+    (!type || t.tc_type === type) &&
+    (!q || t.title.toLowerCase().includes(q) || (t.tc_code || "").toLowerCase().includes(q))
+  );
+
+  const wrap = document.getElementById("plList");
+  if (!plTcs.length) {
+    wrap.innerHTML = `<div class="test-plan-empty">Još nema test caseova. Klikni "Novi test case" da dodaš prvi.</div>`;
+    return;
+  }
+  if (!list.length) {
+    wrap.innerHTML = `<div class="test-plan-empty">Nijedan test case ne odgovara filteru.</div>`;
+    return;
+  }
+  wrap.innerHTML = "";
+  let lastModule = null;
+  list.forEach(t => {
+    if (t.module !== lastModule) {
+      const h = document.createElement("div");
+      h.className = "pl-group-title";
+      h.textContent = t.module;
+      wrap.appendChild(h);
+      lastModule = t.module;
+    }
+    const card = document.createElement("div");
+    card.className = "pl-card" + (plOpenId === t.id ? " open" : "");
+    card.innerHTML = `
+      <div class="pl-card-head">
+        <div class="pl-code">${escapeHtml(t.tc_code || "#" + t.id)}</div>
+        <div class="pl-title">${escapeHtml(t.title)}</div>
+        <div class="pl-meta">
+          ${t.image_count ? `<span class="pl-badge" title="Slike">🖼 ${t.image_count}</span>` : ""}
+          <span class="pl-badge ${plTypeClass(t.tc_type)}">${escapeHtml(t.tc_type)}</span>
+          <span class="pl-badge p-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span>
+        </div>
+      </div>
+      <div class="pl-body ${plOpenId === t.id ? "" : "hidden"}"><div class="test-plan-empty">Učitavam…</div></div>`;
+    card.querySelector(".pl-card-head").addEventListener("click", () => togglePlayerTc(t.id));
+    wrap.appendChild(card);
+    if (plOpenId === t.id) fillPlayerTcBody(card.querySelector(".pl-body"), t.id);
+  });
+}
+
+function togglePlayerTc(id) {
+  plOpenId = plOpenId === id ? null : id;
+  renderPlayerTcs();
+}
+
+async function getFullPlayerTc(id) {
+  if (!plFullCache[id]) plFullCache[id] = await api(`/api/player-tcs/${id}`);
+  return plFullCache[id];
+}
+
+function plParse(s, fallback) { try { return JSON.parse(s || ""); } catch { return fallback; } }
+
+async function fillPlayerTcBody(el, id) {
+  let tc;
+  try { tc = await getFullPlayerTc(id); }
+  catch (e) { el.innerHTML = `<div class="test-plan-empty">${escapeHtml(e.message)}</div>`; return; }
+  const steps = plParse(tc.steps, []);
+  const images = plParse(tc.images, []);
+  const sec = (label, html) => html ? `<div class="pl-section"><div class="pl-label">${label}</div>${html}</div>` : "";
+  el.innerHTML =
+    sec("Preduslovi", tc.preconditions ? `<div class="pl-text">${escapeHtml(tc.preconditions)}</div>` : "") +
+    sec("Koraci", steps.length ? `<ol class="pl-steps">${steps.map(s => `<li>${escapeHtml(s)}</li>`).join("")}</ol>` : "") +
+    sec("Test podaci", tc.test_data ? `<div class="pl-text">${escapeHtml(tc.test_data)}</div>` : "") +
+    sec("Očekivani rezultat", tc.expected ? `<div class="pl-text pl-expected">${escapeHtml(tc.expected)}</div>` : "") +
+    sec("Slike", images.length ? `<div class="pl-gallery">${images.map((im, i) =>
+      `<figure class="pl-shot" data-i="${i}"><img src="${escapeHtml(im.src)}" alt="${escapeHtml(im.caption || "")}" loading="lazy" />${im.caption ? `<figcaption>${escapeHtml(im.caption)}</figcaption>` : ""}</figure>`).join("")}</div>` : "") +
+    `<div class="pl-label" style="text-transform:none; letter-spacing:0; font-weight:500;">Napisao: ${escapeHtml(tc.created_by || "—")} · zadnja izmjena ${escapeHtml(tc.updated_at || "")}</div>
+     <div class="pl-actions">
+       ${currentUser && currentUser.username === "aldin" ? `<button class="btn btn-secondary" data-act="del" style="color:var(--red); border-color:rgba(244,63,94,0.35);">Obriši</button>` : ""}
+       <button class="btn btn-secondary" data-act="edit">Uredi</button>
+     </div>`;
+  el.querySelectorAll(".pl-shot").forEach(f => f.addEventListener("click", () => {
+    const im = images[+f.dataset.i];
+    const lb = document.createElement("div");
+    lb.className = "pl-lightbox";
+    lb.innerHTML = `<img src="${escapeHtml(im.src)}" alt="" /><div>${escapeHtml(im.caption || "")}</div>`;
+    lb.addEventListener("click", () => lb.remove());
+    document.body.appendChild(lb);
+  }));
+  el.querySelector('[data-act="edit"]').addEventListener("click", () => openPlayerTcModal(tc));
+  const del = el.querySelector('[data-act="del"]');
+  if (del) del.addEventListener("click", async () => {
+    if (!confirm(`Obrisati test case "${tc.tc_code || tc.title}"? Ovo se ne može poništiti.`)) return;
+    try {
+      await api(`/api/player-tcs/${tc.id}`, { method: "DELETE" });
+      delete plFullCache[tc.id];
+      plOpenId = null;
+      await loadPlayerTcs();
+    } catch (e) { alert(e.message); }
+  });
+}
+
+function openPlayerTcModal(tc) {
+  plEditingId = tc ? tc.id : null;
+  document.getElementById("plTcModalTitle").textContent = tc ? "Uredi test case" : "Novi test case";
+  document.getElementById("plFModule").value = tc ? tc.module : (plModule || "Registracija");
+  document.getElementById("plFCode").value = tc ? tc.tc_code : "";
+  document.getElementById("plFTitle").value = tc ? tc.title : "";
+  document.getElementById("plFType").value = tc ? tc.tc_type : "Pozitivni";
+  document.getElementById("plFPriority").value = tc ? tc.priority : "Medium";
+  document.getElementById("plFPre").value = tc ? tc.preconditions : "";
+  document.getElementById("plFSteps").value = tc ? plParse(tc.steps, []).join("\n") : "";
+  document.getElementById("plFData").value = tc ? tc.test_data : "";
+  document.getElementById("plFExpected").value = tc ? tc.expected : "";
+  plFormImages = tc ? plParse(tc.images, []).map(i => ({ ...i })) : [];
+  document.getElementById("plTcError").textContent = "";
+  renderPlThumbs();
+  document.getElementById("plTcModal").classList.remove("hidden");
+}
+
+function closePlayerTcModal() {
+  document.getElementById("plTcModal").classList.add("hidden");
+}
+
+function renderPlThumbs() {
+  const wrap = document.getElementById("plThumbs");
+  wrap.innerHTML = "";
+  plFormImages.forEach((im, i) => {
+    const d = document.createElement("div");
+    d.className = "pl-thumb";
+    d.innerHTML = `<img src="${escapeHtml(im.src)}" alt="" /><button type="button" title="Ukloni">✕</button><input placeholder="Opis slike" />`;
+    d.querySelector("input").value = im.caption || "";
+    d.querySelector("input").addEventListener("input", e => { plFormImages[i].caption = e.target.value; });
+    d.querySelector("button").addEventListener("click", () => { plFormImages.splice(i, 1); renderPlThumbs(); });
+    wrap.appendChild(d);
+  });
+}
+
+// Smanji sliku na max 1400px širine i spremi kao JPEG, da stane u bazu
+function plCompressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Ne mogu pročitati sliku"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Neispravna slika"));
+      img.onload = () => {
+        const scale = Math.min(1, 1400 / img.width);
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL("image/jpeg", 0.8));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function plAddFiles(files) {
+  const errEl = document.getElementById("plTcError");
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) continue;
+    try {
+      plFormImages.push({ src: await plCompressImage(f), caption: "" });
+    } catch (e) { errEl.textContent = e.message; }
+  }
+  renderPlThumbs();
+}
+
+document.getElementById("plFFile").addEventListener("change", e => { plAddFiles([...e.target.files]); e.target.value = ""; });
+const plDrop = document.getElementById("plDrop");
+plDrop.addEventListener("dragover", e => { e.preventDefault(); plDrop.classList.add("drag"); });
+plDrop.addEventListener("dragleave", () => plDrop.classList.remove("drag"));
+plDrop.addEventListener("drop", e => { e.preventDefault(); plDrop.classList.remove("drag"); plAddFiles([...e.dataTransfer.files]); });
+document.addEventListener("paste", e => {
+  if (document.getElementById("plTcModal").classList.contains("hidden")) return;
+  const files = [...(e.clipboardData?.items || [])].filter(i => i.kind === "file").map(i => i.getAsFile()).filter(Boolean);
+  if (files.length) { e.preventDefault(); plAddFiles(files); }
+});
+
+document.getElementById("plTcSave").addEventListener("click", async () => {
+  const btn = document.getElementById("plTcSave");
+  const errEl = document.getElementById("plTcError");
+  const body = {
+    module: document.getElementById("plFModule").value.trim(),
+    tc_code: document.getElementById("plFCode").value.trim(),
+    title: document.getElementById("plFTitle").value.trim(),
+    tc_type: document.getElementById("plFType").value,
+    priority: document.getElementById("plFPriority").value,
+    preconditions: document.getElementById("plFPre").value.trim(),
+    steps: document.getElementById("plFSteps").value.split("\n").map(s => s.trim()).filter(Boolean),
+    test_data: document.getElementById("plFData").value.trim(),
+    expected: document.getElementById("plFExpected").value.trim(),
+    images: plFormImages.filter(i => i.src),
+  };
+  if (!body.module || !body.title) { errEl.textContent = "Modul i naslov su obavezni."; return; }
+  btn.disabled = true;
+  errEl.textContent = "";
+  try {
+    if (plEditingId) {
+      await api(`/api/player-tcs/${plEditingId}`, { method: "PUT", body: JSON.stringify(body) });
+      delete plFullCache[plEditingId];
+      plOpenId = plEditingId;
+    } else {
+      const { id } = await api("/api/player-tcs", { method: "POST", body: JSON.stringify(body) });
+      plOpenId = id;
+    }
+    plModule = body.module;
+    closePlayerTcModal();
+    await loadPlayerTcs();
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+document.getElementById("plTcCancel").addEventListener("click", closePlayerTcModal);
+document.getElementById("plTcClose").addEventListener("click", closePlayerTcModal);
+document.getElementById("plNewTcBtn").addEventListener("click", () => openPlayerTcModal(null));
+document.getElementById("plSearch").addEventListener("input", renderPlayerTcs);
+document.getElementById("plTypeFilter").addEventListener("change", renderPlayerTcs);
+
 
 boot();
 </script>
