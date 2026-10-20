@@ -383,8 +383,8 @@ export default {
           const { results } = await env.DB.prepare(
             `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, done_at, done_by,
                     json_array_length(images) as image_count, order_index, created_by, updated_at
-             FROM player_test_cases ORDER BY module, order_index, id`
-          ).all();
+             FROM player_test_cases WHERE suite = ? ORDER BY module, order_index, id`
+          ).bind(playerSuite(url.searchParams.get("suite"))).all();
           return json(results);
         }
         if (pathname === "/api/player-tcs" && request.method === "POST") {
@@ -392,13 +392,13 @@ export default {
           const err = validatePlayerTc(body);
           if (err) return json({ error: err }, 400);
           const countRow = await env.DB.prepare(
-            `SELECT COALESCE(MAX(order_index), -1) + 1 as n FROM player_test_cases WHERE module = ?`
-          ).bind(body.module.trim()).first();
+            `SELECT COALESCE(MAX(order_index), -1) + 1 as n FROM player_test_cases WHERE suite = ? AND module = ?`
+          ).bind(playerSuite(body.suite), body.module.trim()).first();
           const { meta } = await env.DB.prepare(
-            `INSERT INTO player_test_cases (module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            `INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           ).bind(
-            body.module.trim(), (body.tc_code || "").trim(), body.title.trim(), body.tc_type || "Pozitivni", body.priority || "Medium",
+            playerSuite(body.suite), body.module.trim(), (body.tc_code || "").trim(), body.title.trim(), body.tc_type || "Pozitivni", body.priority || "Medium",
             body.preconditions || "", JSON.stringify(body.steps || []), body.test_data || "", body.expected || "", body.admin_check || "",
             JSON.stringify(body.images || []), countRow.n, user.display_name
           ).run();
@@ -418,10 +418,11 @@ export default {
         }
         // Reset svih oznaka (za novu regresiju); module opcionalno ograničava na jedan modul
         if (pathname === "/api/player-tcs/reset-done" && request.method === "POST") {
-          const { module } = await request.json().catch(() => ({}));
+          const { module, suite } = await request.json().catch(() => ({}));
+          const s = playerSuite(suite);
           const { meta } = module
-            ? await env.DB.prepare(`UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE module = ? AND done_at IS NOT NULL`).bind(module).run()
-            : await env.DB.prepare(`UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE done_at IS NOT NULL`).run();
+            ? await env.DB.prepare(`UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE suite = ? AND module = ? AND done_at IS NOT NULL`).bind(s, module).run()
+            : await env.DB.prepare(`UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE suite = ? AND done_at IS NOT NULL`).bind(s).run();
           return json({ ok: true, reset: meta.changes });
         }
         const playerTcMatch = pathname.match(/^\/api\/player-tcs\/(\d+)$/);
@@ -634,6 +635,12 @@ function extractJiraFieldDisplayValue(value) {
     return value.displayName || value.name || value.value || "";
   }
   return "";
+}
+
+// Test suite na Player stranici (npr. 'player', 'bonuses'); nepoznato/prazno -> 'player'
+function playerSuite(s) {
+  s = String(s || "").trim().toLowerCase();
+  return /^[a-z0-9-]{1,30}$/.test(s) ? s : "player";
 }
 
 // Validacija tijela za Player TC (POST/PUT). Vraća poruku greške ili null.

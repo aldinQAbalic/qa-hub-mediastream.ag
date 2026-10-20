@@ -623,6 +623,14 @@
             <div class="quick-nav-open">Open →</div>
           </div>
         </div>
+        <div class="quick-nav-card" id="qnPlayerBonuses">
+          <div class="quick-nav-icon">🎁</div>
+          <div class="quick-nav-title">PLAYER - BONUSES</div>
+          <div class="quick-nav-bottom">
+            <div class="quick-nav-sub">Bonusi, free bet, promocije</div>
+            <div class="quick-nav-open">Open →</div>
+          </div>
+        </div>
       </div>
 
       <div class="release-grid hidden" id="releaseGrid"></div><!-- release kartice sakrivene na Mediastreamu -->
@@ -849,15 +857,15 @@
     <!-- ===== PLAYER ===== -->
     <div id="playerView" class="hidden">
       <div class="breadcrumb">
-        <b id="plCrumbWorkspace">Workspace</b> &nbsp;›&nbsp; <span>Player</span>
+        <b id="plCrumbWorkspace">Workspace</b> &nbsp;›&nbsp; <span id="plCrumbName">Player</span>
       </div>
       <div class="back-link" id="plBackLink">← Back to Workspace</div>
 
       <div class="release-header">
         <div>
-          <div class="eyebrow">PLAYER</div>
-          <h1 class="release-title" style="font-size:28px;">Player</h1>
-          <p class="release-desc">Test caseovi i vodiči za sve što se tiče igrača: registracija, login, profil.</p>
+          <div class="eyebrow" id="plEyebrow">PLAYER</div>
+          <h1 class="release-title" style="font-size:28px;" id="plTitle">Player</h1>
+          <p class="release-desc" id="plDesc">Test caseovi i vodiči za sve što se tiče igrača: registracija, login, profil.</p>
         </div>
         <button class="btn btn-primary" id="plNewTcBtn" style="width:auto;">＋ Novi test case</button>
       </div>
@@ -1954,7 +1962,22 @@ function openTestSuitesView() {
 }
 document.getElementById("tsCrumbWorkspace").addEventListener("click", showHome);
 
-function openPlayerView() {
+// Test suiteovi koji koriste Player stranicu (isti izgled, odvojeni TC-ovi)
+const PL_SUITES = {
+  player:  { name: "Player", eyebrow: "PLAYER", desc: "Test caseovi i vodiči za sve što se tiče igrača: registracija, login, profil.", defaultModule: "Registracija" },
+  bonuses: { name: "Player - Bonuses", eyebrow: "PLAYER - BONUSES", desc: "Test caseovi za bonuse: free bet, bonus na depozit, promo kodovi, uslovi prometa.", defaultModule: "Bonuses" },
+};
+let plSuite = "player";
+
+function openPlayerView(suite) {
+  const newSuite = PL_SUITES[suite] ? suite : "player";
+  if (newSuite !== plSuite) { plModule = ""; plOpenId = null; }
+  plSuite = newSuite;
+  const cfg = PL_SUITES[plSuite];
+  document.getElementById("plCrumbName").textContent = cfg.name;
+  document.getElementById("plEyebrow").textContent = cfg.eyebrow;
+  document.getElementById("plTitle").textContent = cfg.name;
+  document.getElementById("plDesc").textContent = cfg.desc;
   document.getElementById("homeView").classList.add("hidden");
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
@@ -2219,7 +2242,8 @@ document.getElementById("qnRelease").addEventListener("click", () => {
   }
 });
 document.getElementById("qnTestSuites").addEventListener("click", openTestSuitesView);
-document.getElementById("qnPlayer").addEventListener("click", openPlayerView);
+document.getElementById("qnPlayer").addEventListener("click", () => openPlayerView("player"));
+document.getElementById("qnPlayerBonuses").addEventListener("click", () => openPlayerView("bonuses"));
 // ===== Player: detaljni test caseovi =====
 let plTcs = [];
 let plModule = "";          // "" = svi moduli
@@ -2237,7 +2261,7 @@ function plTypeClass(t) {
 
 async function loadPlayerTcs() {
   try {
-    plTcs = await api("/api/player-tcs");
+    plTcs = await api(`/api/player-tcs?suite=${encodeURIComponent(plSuite)}`);
   } catch (e) {
     document.getElementById("plList").innerHTML =
       `<div class="test-plan-empty">Ne mogu učitati test caseove: ${escapeHtml(e.message)}. Ako je ovo prvo pokretanje, pokreni migration-player-tcs.sql.</div>`;
@@ -2355,7 +2379,7 @@ document.getElementById("plResetDoneBtn").addEventListener("click", async () => 
   const what = plModule ? `modul "${plModule}"` : "SVE module";
   if (!confirm(`Poništiti ${scope.length} oznaka "testirano" za ${what}?\nOvo vidi cijeli tim i ne može se vratiti.`)) return;
   try {
-    await api("/api/player-tcs/reset-done", { method: "POST", body: JSON.stringify(plModule ? { module: plModule } : {}) });
+    await api("/api/player-tcs/reset-done", { method: "POST", body: JSON.stringify(plModule ? { module: plModule, suite: plSuite } : { suite: plSuite }) });
     await loadPlayerTcs();
   } catch (e) { alert(e.message); }
 });
@@ -2416,7 +2440,7 @@ async function fillPlayerTcBody(el, id) {
 function openPlayerTcModal(tc) {
   plEditingId = tc ? tc.id : null;
   document.getElementById("plTcModalTitle").textContent = tc ? "Uredi test case" : "Novi test case";
-  document.getElementById("plFModule").value = tc ? tc.module : (plModule || "Registracija");
+  document.getElementById("plFModule").value = tc ? tc.module : (plModule || PL_SUITES[plSuite].defaultModule);
   document.getElementById("plFCode").value = tc ? tc.tc_code : "";
   document.getElementById("plFTitle").value = tc ? tc.title : "";
   document.getElementById("plFType").value = tc ? tc.tc_type : "Pozitivni";
@@ -2508,6 +2532,7 @@ document.getElementById("plTcSave").addEventListener("click", async () => {
     test_data: document.getElementById("plFData").value.trim(),
     expected: document.getElementById("plFExpected").value.trim(),
     admin_check: document.getElementById("plFAdmin").value.trim(),
+    suite: plSuite,
     images: plFormImages.filter(i => i.src),
   };
   if (!body.module || !body.title) { errEl.textContent = "Modul i naslov su obavezni."; return; }
