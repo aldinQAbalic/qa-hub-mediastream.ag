@@ -1,0 +1,53 @@
+-- Seed: Player - Bonuses, bonusi igrača na Terminalu.
+-- wrangler d1 execute qa-hub-mediastream-db --remote --file=./seed-bonuses-terminal.sql
+
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-001', 'Prijava na terminal i prikaz bonusa', 'Pozitivni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).', '["Na terminalu se prijavi karticom i PIN-om (ili brojem telefona, ako je podržano).", "Otvori pregled naloga / bonusa na terminalu.", "Uporedi sa My Account → Bonuses na webu."]', '', 'Terminal prikazuje iste bonuse kao web: naziv, status (ACTIVE / NOT ACCEPTED / PENDING), iznos, rok važenja i uslove.
+Balans na terminalu = balans u zaglavlju na webu (Main + bonus walleti).', 'U adminu (Terminals) vidi se sesija igrača na terminalu; bonusi igrača u Players odgovaraju prikazu na terminalu.', '[]', 0, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-002', 'Prihvatanje bonusa na terminalu', 'Pozitivni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).
+Igrač ima bonus NOT ACCEPTED (Automatic acceptance = No).', '["Na terminalu pronađi bonus NOT ACCEPTED i prihvati ga (ako terminal to nudi).", "Na webu osvježi My Account → Bonuses."]', '', 'Ako terminal podržava prihvatanje: bonus postaje ACTIVE i isto se vidi na webu.
+Ako ne podržava: terminal jasno kaže da se bonus prihvata online (provjeriti sa PO).', 'U adminu bonus je prihvaćen sa vremenom i kanalom (terminal).', '[]', 1, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-003', 'Uplata tiketa bonusom na terminalu', 'Pozitivni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).
+Igrač ima ACTIVE bonus (npr. min. kvota 1.20).', '["Na terminalu dodaj selekcije koje ispunjavaju uslove bonusa.", "Odaberi plaćanje bonusom i unesi ulog.", "Uplati tiket.", "Na webu provjeri Bonuses (Available Amount, promet), Transaction list i Sport Tickets."]', '', 'Terminal nudi samo ACTIVE bonuse, samo jedan po tiketu.
+Ulog se skida sa bonus walleta, a ne sa Main Walleta.
+Tiket je vidljiv i na webu (Sport Tickets), a Transaction list ima Bet iz bonus walleta.
+Nakon obračuna promet bonusa raste isto kao kod tiketa sa weba.', 'U adminu tiket je označen kao uplaćen na terminalu i vezan za bonus wallet.', '[]', 2, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-004', 'Uslovi bonusa na terminalu (min. kvota, selekcije)', 'Negativni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).
+Igrač ima ACTIVE bonus sa min. kvotom (npr. 1.60 ukupno, 1.50 po događaju).', '["Na terminalu odaberi bonus i selekciju sa kvotom ispod minimuma (npr. 1.03).", "Pokušaj sa ukupnom kvotom 1.55.", "Pokušaj sa premalo selekcija (ako bonus traži min. 2)."]', '', 'Terminal primjenjuje ISTA pravila kao web (BTK-003, BTK-004, BTK-005): tiket se blokira uz jasnu poruku, a dugme za uplatu je neaktivno.
+Nema razlike u pravilima između weba i terminala.', '', '[]', 3, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-005', 'Free bet na terminalu', 'Pozitivni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).
+Igrač ima ACTIVE free bet.', '["Na terminalu odaberi free bet za tiket.", "Uplati i sačekaj obračun.", "Provjeri isplatu na terminalu i na webu."]', '', 'Free bet se nudi i koristi kao na webu (ulog = iznos free beta, kod dobitka isplata bez uloga – prema pravilima PO).
+Free bet prelazi u Used i na webu.', '', '[]', 4, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-006', 'Bonus na depozit preko terminala', 'Pozitivni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).
+Igrač ima PENDING bonus na depozit (npr. min. depozit 50 €).', '["Uplati gotovinu na terminalu ispod minimuma za bonus.", "Uplati iznos koji ispunjava uslov.", "Provjeri bonus na terminalu i na webu."]', '', 'Depozit ispod minimuma ne aktivira bonus.
+Depozit preko terminala koji ispunjava uslov aktivira bonus isto kao online depozit (ili prema pravilima – provjeriti da li se depozit na terminalu računa za bonus).', 'U adminu depozit sa terminala i dodjela bonusa su povezani (igrač, terminal, iznos, vrijeme).', '[]', 5, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-007', 'Isplata dobitka bonus tiketa na terminalu', 'Negativni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).
+Igrač ima dobitni tiket uplaćen bonusom, a promet bonusa nije završen.', '["Na terminalu pokušaj isplatiti dobitak bonus tiketa.", "Pokušaj isplatiti iznos veći od Withdrawable."]', '', 'Dobitak sa bonus tiketa ostaje u bonus walletu dok promet nije završen i ne može se isplatiti na terminalu.
+Poruka je ista kao na webu ("Withdrawal amount exceeds the withdrawable balance of X EUR") ili jasno objašnjava zašto.', 'U adminu nema isplate bonus novca prije završenog prometa.', '[]', 6, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-008', 'Istek i brisanje bonusa vidljivi na terminalu', 'Pozitivni', 'Medium', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).', '["Na webu obriši jedan ACTIVE bonus (Delete).", "Sačekaj istek drugog bonusa (ili ga skrati u adminu).", "Na terminalu se ponovo prijavi i provjeri bonuse i balans."]', '', 'Obrisani i istekli bonusi se više ne nude na terminalu, a balans na terminalu je ažuriran odmah (bez keširanih starih vrijednosti).', '', '[]', 7, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-009', 'Istovremeno korištenje bonusa na webu i terminalu', 'Negativni', 'High', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).
+Igrač ima ACTIVE bonus od npr. 20 €.
+Igrač je prijavljen na webu i na terminalu.', '["Na webu uplati tiket od 15 € bonusom.", "Odmah na terminalu pokušaj uplatiti tiket od 15 € istim bonusom."]', '', 'Drugi tiket se odbija (ostalo je samo 5 €) – bonus se ne može potrošiti dvaput.
+Balans bonusa nikad nije negativan.', 'U adminu postoji samo jedan tiket na bonus walletu za taj iznos.', '[]', 8, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-010', 'Self-exclusion i limiti na terminalu', 'Sigurnost', 'High', 'Igrač sa aktivnim self-exclusionom (RG-012) i igrač sa limitom gubitka (RG-009).', '["Pokušaj prijavu na terminal igračem u self-exclusionu.", "Igračem sa limitom gubitka pokušaj bonus tiket koji bi prešao limit."]', '', 'Igrač u self-exclusionu se ne može prijaviti niti igrati na terminalu.
+Limiti važe i na terminalu, i kod igre bonusom.', '', '[]', 9, 'Claude');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Bonus - Terminal', 'BTE-011', 'Prikaz bonusa na terminalu (UI)', 'UI/UX', 'Low', 'Testni terminal u shopu (ili VM-4 terminal) je dostupan i aktivan.
+Igrač ima karticu iz shopa i PIN (vidi Manage Cards) i bonuse u različitim statusima (ACTIVE, NOT ACCEPTED, PENDING).
+Zabilježeni bonusi i balans sa weba (My Account → Bonuses i Overview).', '["Pregledaj ekran sa bonusima i bet slip na terminalu (touch ekran)."]', '', 'Nazivi, iznosi i uslovi su čitljivi, dugmad dovoljno velika za dodir, poruke o uslovima bonusa jasne (iste greške kao na webu: duplo "Minimum selection", naziv "Completition" – provjeriti da li se ponavljaju i ovdje).', '', '[]', 10, 'Claude');
