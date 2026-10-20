@@ -1,0 +1,14 @@
+-- Dodaje BON-004 (Registration bonus preko Promotions).
+-- wrangler d1 execute qa-hub-mediastream-db --remote --file=./seed-bonuses-bon004.sql
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) VALUES ('bonuses', 'Admin - Bonuses', 'BON-004', 'Kreiranje Registration bonusa preko Promotions', 'Pozitivni', 'High', 'Admin je prijavljen u admin panel staging-2 (Marketing → Campaigns / Promotions).
+Testni email i broj telefona koji još nisu registrovani.', '["Marketing → Campaigns → Create: kreiraj kampanju tipa \"Promotion\" (npr. naziv QA Test REGISTRATION), whitelabel [Staging] Safebet - Austria, sačuvaj.", "U kampanji dodaj i aktiviraj registration bonus aktivnost (npr. Free bet ili Simple bonus, Currency EUR).", "Marketing → Promotions → Create.", "Odaberi Whitelabel [Staging] Safebet - Austria i Campaign kreiranu u koraku 1.", "Affiliate ostavi prazno (ili odaberi, ako se testira affiliate).", "Unesi Name (i Code, ako polje postoji) i sačuvaj.", "Na stranici detalja promocije provjeri sva polja, link i QR kod; klikni \"Download PNG\" i ikonu za kopiranje linka.", "U privatnom prozoru otvori link promocije (i skeniraj QR kod mobitelom).", "Registruj novog igrača preko tog linka (vidi REG-002).", "Kao novi igrač provjeri My Account → Bonuses, Overview i Transaction list."]', 'Campaign: QA Test REGISTRATION (Type: Promotion)
+Promotion Name: npr. QATest20.10
+Whitelabel: [Staging] Safebet - Austria', 'Kampanja tipa Promotion je kreirana i vidljiva u Campaigns (Type = Promotion).
+Nakon spremanja promocije prikazuje se poruka "Promotion created." i stranica detalja sa: ID, Whitelabel, Campaign (link), Affiliate (- ako nije odabran), Code, Name, Link (https://www.staging-2.safebet.at/promotion/<CODE>) sa dugmetom za kopiranje, QR Code sa "Download PNG", Created i Active (zelena kvačica).
+Link otvara registraciju sa unaprijed popunjenim promo kodom; na mobitelu preusmjerava na mobilnu verziju sa istim kodom.
+QR kod vodi na isti link, a PNG se preuzima ispravno.
+Novi igrač registrovan preko linka dobija registration bonus iz kampanje (tačan tip i iznos); igrač registrovan BEZ linka/koda ga ne dobija.
+Napomena: na stagingu je za Name "AldinTesting17.3" generisan Code "ALDINTESTING173" (velika slova, bez tačke) – provjeri pravila generisanja koda i šta se dešava sa razmacima i posebnim znakovima.', 'U Promotions je promocija aktivna i vezana za ispravnu kampanju.
+U Players → novi igrač: zabilježen promo kod / promocija preko koje se registrovao i dodijeljeni bonus sa iznosom i kampanjom.
+Negativno: pokušaj kreirati promociju sa kodom koji već postoji, bez kampanje i sa kampanjom koja nije tipa Promotion – očekuje se jasna poruka.
+Deaktiviraj promociju i ponovi registraciju preko linka – bonus se više ne dodjeljuje.', '[]', 3, 'Aldin Balic');
