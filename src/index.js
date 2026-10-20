@@ -381,7 +381,7 @@ export default {
         // images = JSON niz { src, caption }; src je ili staticki put (/player-guide/...) ili data URL (upload iz UI-a)
         if (pathname === "/api/player-tcs" && request.method === "GET") {
           const { results } = await env.DB.prepare(
-            `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check,
+            `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, done_at, done_by,
                     json_array_length(images) as image_count, order_index, created_by, updated_at
              FROM player_test_cases ORDER BY module, order_index, id`
           ).all();
@@ -403,6 +403,26 @@ export default {
             JSON.stringify(body.images || []), countRow.n, user.display_name
           ).run();
           return json({ id: meta.last_row_id });
+        }
+        // Regresija: označi TC kao testiran / poništi oznaku
+        const playerDoneMatch = pathname.match(/^\/api\/player-tcs\/(\d+)\/done$/);
+        if (playerDoneMatch && request.method === "PATCH") {
+          const { done } = await request.json();
+          const { meta } = await env.DB.prepare(
+            done
+              ? `UPDATE player_test_cases SET done_at = datetime('now'), done_by = ? WHERE id = ?`
+              : `UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE id = ?`
+          ).bind(...(done ? [user.display_name, playerDoneMatch[1]] : [playerDoneMatch[1]])).run();
+          if (!meta.changes) return json({ error: "Test case nije pronađen" }, 404);
+          return json({ ok: true });
+        }
+        // Reset svih oznaka (za novu regresiju); module opcionalno ograničava na jedan modul
+        if (pathname === "/api/player-tcs/reset-done" && request.method === "POST") {
+          const { module } = await request.json().catch(() => ({}));
+          const { meta } = module
+            ? await env.DB.prepare(`UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE module = ? AND done_at IS NOT NULL`).bind(module).run()
+            : await env.DB.prepare(`UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE done_at IS NOT NULL`).run();
+          return json({ ok: true, reset: meta.changes });
         }
         const playerTcMatch = pathname.match(/^\/api\/player-tcs\/(\d+)$/);
         if (playerTcMatch && request.method === "GET") {

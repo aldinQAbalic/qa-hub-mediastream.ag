@@ -458,6 +458,17 @@
   .pl-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
   .pl-card.open { border-color: var(--blue); }
   .pl-card-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+  .pl-check { display: flex; align-items: center; padding: 4px; margin: -4px 0 -4px -4px; cursor: pointer; flex-shrink: 0; }
+  .pl-check input { width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; margin: 0; }
+  .pl-card.done { border-color: rgba(34,197,94,0.35); }
+  .pl-card.done .pl-title { color: var(--muted); }
+  .pl-done-by { font-size: 11px; color: var(--green); white-space: nowrap; }
+  .pl-progress { display: flex; align-items: center; gap: 14px; margin: 0 0 6px; }
+  .pl-progress-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .pl-progress-label b { color: var(--text); }
+  .pl-progress-bar { flex: 1; height: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+  .pl-progress-bar div { height: 100%; background: var(--green); width: 0; transition: width .2s ease; }
+  .pl-progress .btn { width: auto; padding: 7px 12px; font-size: 12px; }
   .pl-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: #7c93ff; font-weight: 700; min-width: 64px; }
   .pl-title { flex: 1; font-weight: 600; font-size: 14px; min-width: 0; }
   .pl-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
@@ -859,6 +870,12 @@
         </select>
         <input id="plSearch" name="pl-tc-search" type="search" autocomplete="off" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="Traži po ID-u ili naslovu…" />
       </form>
+
+      <div class="pl-progress" id="plProgress">
+        <div class="pl-progress-label" id="plProgressLabel"></div>
+        <div class="pl-progress-bar"><div id="plProgressFill"></div></div>
+        <button type="button" class="btn btn-secondary" id="plResetDoneBtn" title="Poništi sve oznake za novu regresiju">↺ Reset</button>
+      </div>
 
       <div id="plList"></div>
     </div><!-- /playerView -->
@@ -2256,6 +2273,8 @@ function renderPlayerTcs() {
     (!q || t.title.toLowerCase().includes(q) || (t.tc_code || "").toLowerCase().includes(q))
   );
 
+  renderPlayerProgress();
+
   const wrap = document.getElementById("plList");
   if (!plTcs.length) {
     wrap.innerHTML = `<div class="test-plan-empty">Još nema test caseova. Klikni "Novi test case" da dodaš prvi.</div>`;
@@ -2276,12 +2295,14 @@ function renderPlayerTcs() {
       lastModule = t.module;
     }
     const card = document.createElement("div");
-    card.className = "pl-card" + (plOpenId === t.id ? " open" : "");
+    card.className = "pl-card" + (plOpenId === t.id ? " open" : "") + (t.done_at ? " done" : "");
     card.innerHTML = `
       <div class="pl-card-head">
+        <label class="pl-check" title="${t.done_at ? "Testirano: " + escapeHtml(t.done_by || "") + ", " + escapeHtml(plFmtDone(t.done_at)) : "Označi kao testirano"}"><input type="checkbox" ${t.done_at ? "checked" : ""} /></label>
         <div class="pl-code">${escapeHtml(t.tc_code || "#" + t.id)}</div>
         <div class="pl-title">${escapeHtml(t.title)}</div>
         <div class="pl-meta">
+          ${t.done_at ? `<span class="pl-done-by">✓ ${escapeHtml(t.done_by || "")}</span>` : ""}
           ${t.image_count ? `<span class="pl-badge" title="Slike">🖼 ${t.image_count}</span>` : ""}
           <span class="pl-badge ${plTypeClass(t.tc_type)}">${escapeHtml(t.tc_type)}</span>
           <span class="pl-badge p-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span>
@@ -2289,10 +2310,55 @@ function renderPlayerTcs() {
       </div>
       <div class="pl-body ${plOpenId === t.id ? "" : "hidden"}"><div class="test-plan-empty">Učitavam…</div></div>`;
     card.querySelector(".pl-card-head").addEventListener("click", () => togglePlayerTc(t.id));
+    const chk = card.querySelector(".pl-check");
+    chk.addEventListener("click", e => e.stopPropagation());
+    chk.querySelector("input").addEventListener("change", e => setPlayerTcDone(t, e.target.checked));
     wrap.appendChild(card);
     if (plOpenId === t.id) fillPlayerTcBody(card.querySelector(".pl-body"), t.id);
   });
 }
+
+// ===== Regresija: checkbox "testirano" + reset =====
+function plFmtDone(s) {
+  if (!s) return "";
+  const d = new Date(s.replace(" ", "T") + "Z");
+  return isNaN(d) ? s : d.toLocaleString("bs-BA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function renderPlayerProgress() {
+  const scope = plTcs.filter(t => !plModule || t.module === plModule);
+  const done = scope.filter(t => t.done_at).length;
+  const pct = scope.length ? Math.round(done / scope.length * 100) : 0;
+  document.getElementById("plProgress").classList.toggle("hidden", !scope.length);
+  document.getElementById("plProgressLabel").innerHTML = `Testirano${plModule ? " (" + escapeHtml(plModule) + ")" : ""}: <b>${done} / ${scope.length}</b> · ${pct}%`;
+  document.getElementById("plProgressFill").style.width = pct + "%";
+  document.getElementById("plResetDoneBtn").disabled = done === 0;
+}
+
+async function setPlayerTcDone(t, done) {
+  const prev = { done_at: t.done_at, done_by: t.done_by };
+  t.done_at = done ? new Date().toISOString().slice(0, 19).replace("T", " ") : null;
+  t.done_by = done ? (currentUser ? currentUser.display_name : "") : "";
+  renderPlayerTcs();
+  try {
+    await api(`/api/player-tcs/${t.id}/done`, { method: "PATCH", body: JSON.stringify({ done }) });
+  } catch (e) {
+    Object.assign(t, prev);
+    renderPlayerTcs();
+    alert("Nije sačuvano: " + e.message);
+  }
+}
+
+document.getElementById("plResetDoneBtn").addEventListener("click", async () => {
+  const scope = plTcs.filter(t => (!plModule || t.module === plModule) && t.done_at);
+  if (!scope.length) return;
+  const what = plModule ? `modul "${plModule}"` : "SVE module";
+  if (!confirm(`Poništiti ${scope.length} oznaka "testirano" za ${what}?\nOvo vidi cijeli tim i ne može se vratiti.`)) return;
+  try {
+    await api("/api/player-tcs/reset-done", { method: "POST", body: JSON.stringify(plModule ? { module: plModule } : {}) });
+    await loadPlayerTcs();
+  } catch (e) { alert(e.message); }
+});
 
 function togglePlayerTc(id) {
   plOpenId = plOpenId === id ? null : id;
