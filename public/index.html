@@ -1979,6 +1979,17 @@ const PL_SUITES = {
 };
 let plSuite = "player";
 
+// Redoslijed tabova (modula) po suiteu; moduli koji nisu na listi idu na kraj, abecedno
+const PL_MODULE_ORDER = {
+  player: ["Registracija", "Change Password", "Login", "KYC", "Deposit", "Sport Tickets", "Withdrawal", "Logs", "Payments history", "Manage Cards", "Responsible Gambling", "Transaction list"],
+  bonuses: ["Admin - Bonuses", "Player - Bonuses", "Bonus - Tiketi", "Bonus - Terminal"],
+};
+function plModuleRank(m) {
+  const order = (PL_MODULE_ORDER[plSuite] || []).map(x => x.toLowerCase());
+  const i = order.indexOf(String(m || "").toLowerCase());
+  return i === -1 ? 999 : i;
+}
+
 function openPlayerView(suite) {
   const newSuite = PL_SUITES[suite] ? suite : "player";
   if (newSuite !== plSuite) { plModule = ""; plOpenId = null; }
@@ -2281,7 +2292,7 @@ async function loadPlayerTcs() {
 }
 
 function renderPlayerTcs() {
-  const modules = [...new Set(plTcs.map(t => t.module))];
+  const modules = [...new Set(plTcs.map(t => t.module))].sort((a, b) => plModuleRank(a) - plModuleRank(b) || a.localeCompare(b));
   if (plModule && !modules.includes(plModule)) plModule = "";
   const chips = document.getElementById("plModuleChips");
   chips.innerHTML = "";
@@ -2307,7 +2318,10 @@ function renderPlayerTcs() {
   if (!plSearchTyped && currentUser && searchEl.value.trim().toLowerCase() === currentUser.username.toLowerCase()) searchEl.value = "";
   const q = searchEl.value.trim().toLowerCase();
   const type = document.getElementById("plTypeFilter").value;
-  const list = plTcs.filter(t =>
+  const list = plTcs.slice().sort((a, b) =>
+    plModuleRank(a.module) - plModuleRank(b.module) || a.module.localeCompare(b.module) ||
+    (a.order_index - b.order_index) || (a.id - b.id)
+  ).filter(t =>
     (!plModule || t.module === plModule) &&
     (!type || t.tc_type === type) &&
     (!q || t.title.toLowerCase().includes(q) || (t.tc_code || "").toLowerCase().includes(q))
