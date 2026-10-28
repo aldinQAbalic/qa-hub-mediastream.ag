@@ -449,6 +449,8 @@
     padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
   }
   .pl-chip.active { border-color: var(--blue); color: var(--text); background: var(--blue-soft); }
+  .pl-chip.complete { border-color: rgba(34,197,94,0.55); }
+  .pl-chip-check { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 6px; border-radius: 4px; background: var(--green); color: #0b0f1a; font-size: 11px; font-weight: 900; vertical-align: -2px; }
   .pl-toolbar input, .pl-toolbar select, .modal .field select {
     padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2);
     color: var(--text); font-size: 13px; font-family: inherit;
@@ -487,6 +489,10 @@
   .pl-steps { margin: 0; padding-left: 22px; font-size: 14px; line-height: 1.6; }
   .pl-expected { background: var(--green-soft); border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 6px; }
   .pl-admin { background: #f4f6fb; color: #111827; border-left: 3px solid var(--blue); padding: 12px 14px; border-radius: 6px; }
+  .pl-bugs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pl-bug-link { display: inline-flex; align-items: center; gap: 6px; background: var(--red-soft); color: var(--red); border: 1px solid rgba(244,63,94,0.35); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700; text-decoration: none; }
+  .pl-bug-link:hover { filter: brightness(1.2); }
+  .pl-badge.bug { background: var(--red-soft); color: var(--red); }
   .pl-admin-title { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #3b4fd9; margin-bottom: 6px; text-transform: uppercase; }
   .pl-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
   .pl-shot { margin: 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: zoom-in; }
@@ -1092,6 +1098,10 @@
     <div class="field">
       <label>Provjera u admin panelu <span class="optional-tag">šta provjeriti u back-officeu, ne samo na frontendu</span></label>
       <textarea id="plFAdmin" rows="3" placeholder="npr. Igrač postoji, podaci se poklapaju, status naloga…"></textarea>
+    </div>
+    <div class="field">
+      <label>🐞 Bug linkovi (Jira) <span class="optional-tag">jedan po redu – link ili ključ (npr. SPORTS-7637)</span></label>
+      <textarea id="plFBugs" rows="2" placeholder="https://mediastreamag.atlassian.net/browse/SPORTS-7637"></textarea>
     </div>
     <div class="field">
       <label>Slike <span class="optional-tag">zalijepi (Ctrl+V), prevuci ili odaberi</span></label>
@@ -2279,8 +2289,14 @@ function renderPlayerTcs() {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "pl-chip" + (m === plModule ? " active" : "");
-    const count = m ? plTcs.filter(t => t.module === m).length : plTcs.length;
-    b.textContent = `${m || "Svi"} (${count})`;
+    const inMod = m ? plTcs.filter(t => t.module === m) : plTcs;
+    const count = inMod.length;
+    const doneCount = inMod.filter(t => t.done_at).length;
+    // Kvačica se sama pojavi kad su svi TC-ovi u modulu označeni kao testirani
+    const complete = count > 0 && doneCount === count;
+    if (complete) b.classList.add("complete");
+    b.title = `${doneCount} / ${count} testirano`;
+    b.innerHTML = `${escapeHtml(m || "Svi")} (${count})${complete ? '<span class="pl-chip-check" aria-label="Svi testirani">✓</span>' : ""}`;
     b.addEventListener("click", () => { plModule = m; renderPlayerTcs(); });
     chips.appendChild(b);
   });
@@ -2327,6 +2343,7 @@ function renderPlayerTcs() {
         <div class="pl-title">${escapeHtml(t.title)}</div>
         <div class="pl-meta">
           ${t.done_at ? `<span class="pl-done-by">✓ ${escapeHtml(t.done_by || "")}</span>` : ""}
+          ${plBugList(t.bug_links).length ? `<span class="pl-badge bug" title="${escapeHtml(plBugList(t.bug_links).map(b => b.key).join(", "))}">🐞 ${plBugList(t.bug_links).length === 1 ? escapeHtml(plBugList(t.bug_links)[0].key) : plBugList(t.bug_links).length}</span>` : ""}
           ${t.image_count ? `<span class="pl-badge" title="Slike">🖼 ${t.image_count}</span>` : ""}
           <span class="pl-badge ${plTypeClass(t.tc_type)}">${escapeHtml(t.tc_type)}</span>
           <span class="pl-badge p-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span>
@@ -2343,6 +2360,18 @@ function renderPlayerTcs() {
 }
 
 // ===== Regresija: checkbox "testirano" + reset =====
+// Jira bugovi na TC-u: "link ili ključ" po redu -> [{ url, key }]
+const PL_JIRA_BASE = "https://mediastreamag.atlassian.net/browse/";
+function plBugList(v) {
+  return String(v || "").split(/[\r\n]+/).map(s => s.trim()).filter(Boolean).map(s => {
+    if (/^https?:\/\//i.test(s)) {
+      const m = s.match(/([A-Z][A-Z0-9]+-\d+)/);
+      return { url: s, key: m ? m[1] : s.replace(/^https?:\/\//i, "").slice(0, 30) };
+    }
+    return /^[A-Z][A-Z0-9]+-\d+$/i.test(s) ? { url: PL_JIRA_BASE + s.toUpperCase(), key: s.toUpperCase() } : null;
+  }).filter(Boolean);
+}
+
 function plFmtDone(s) {
   if (!s) return "";
   const d = new Date(s.replace(" ", "T") + "Z");
@@ -2408,6 +2437,7 @@ async function fillPlayerTcBody(el, id) {
     sec("Koraci", steps.length ? `<ol class="pl-steps">${steps.map(s => `<li>${escapeHtml(s)}</li>`).join("")}</ol>` : "") +
     sec("Test podaci", tc.test_data ? `<div class="pl-text">${escapeHtml(tc.test_data)}</div>` : "") +
     sec("Očekivani rezultat", tc.expected ? `<div class="pl-text pl-expected">${escapeHtml(tc.expected)}</div>` : "") +
+    (plBugList(tc.bug_links).length ? `<div class="pl-section"><div class="pl-label">🐞 Bugovi</div><div class="pl-bugs">${plBugList(tc.bug_links).map(b => `<a class="pl-bug-link" href="${escapeHtml(b.url)}" target="_blank" rel="noopener noreferrer">🐞 ${escapeHtml(b.key)} ↗</a>`).join("")}</div></div>` : "") +
     (tc.admin_check ? `<div class="pl-section"><div class="pl-admin"><div class="pl-admin-title">🛠 Provjeri u admin panelu</div><div class="pl-text">${escapeHtml(tc.admin_check)}</div></div></div>` : "") +
     sec("Slike", images.length ? `<div class="pl-gallery">${images.map((im, i) =>
       `<figure class="pl-shot" data-i="${i}"><img src="${escapeHtml(im.src)}" alt="${escapeHtml(im.caption || "")}" loading="lazy" />${im.caption ? `<figcaption>${escapeHtml(im.caption)}</figcaption>` : ""}</figure>`).join("")}</div>` : "") +
@@ -2450,6 +2480,7 @@ function openPlayerTcModal(tc) {
   document.getElementById("plFData").value = tc ? tc.test_data : "";
   document.getElementById("plFExpected").value = tc ? tc.expected : "";
   document.getElementById("plFAdmin").value = tc ? (tc.admin_check || "") : "";
+  document.getElementById("plFBugs").value = tc ? (tc.bug_links || "") : "";
   plFormImages = tc ? plParse(tc.images, []).map(i => ({ ...i })) : [];
   document.getElementById("plTcError").textContent = "";
   renderPlThumbs();
@@ -2532,6 +2563,7 @@ document.getElementById("plTcSave").addEventListener("click", async () => {
     test_data: document.getElementById("plFData").value.trim(),
     expected: document.getElementById("plFExpected").value.trim(),
     admin_check: document.getElementById("plFAdmin").value.trim(),
+    bug_links: document.getElementById("plFBugs").value.trim(),
     suite: plSuite,
     images: plFormImages.filter(i => i.src),
   };

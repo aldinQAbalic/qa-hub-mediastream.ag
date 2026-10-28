@@ -381,7 +381,7 @@ export default {
         // images = JSON niz { src, caption }; src je ili staticki put (/player-guide/...) ili data URL (upload iz UI-a)
         if (pathname === "/api/player-tcs" && request.method === "GET") {
           const { results } = await env.DB.prepare(
-            `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, done_at, done_by,
+            `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, bug_links, done_at, done_by,
                     json_array_length(images) as image_count, order_index, created_by, updated_at
              FROM player_test_cases WHERE suite = ? ORDER BY module, order_index, id`
           ).bind(playerSuite(url.searchParams.get("suite"))).all();
@@ -395,11 +395,11 @@ export default {
             `SELECT COALESCE(MAX(order_index), -1) + 1 as n FROM player_test_cases WHERE suite = ? AND module = ?`
           ).bind(playerSuite(body.suite), body.module.trim()).first();
           const { meta } = await env.DB.prepare(
-            `INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            `INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, bug_links, images, order_index, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           ).bind(
             playerSuite(body.suite), body.module.trim(), (body.tc_code || "").trim(), body.title.trim(), body.tc_type || "Pozitivni", body.priority || "Medium",
-            body.preconditions || "", JSON.stringify(body.steps || []), body.test_data || "", body.expected || "", body.admin_check || "",
+            body.preconditions || "", JSON.stringify(body.steps || []), body.test_data || "", body.expected || "", body.admin_check || "", normBugLinks(body.bug_links),
             JSON.stringify(body.images || []), countRow.n, user.display_name
           ).run();
           return json({ id: meta.last_row_id });
@@ -437,10 +437,10 @@ export default {
           if (err) return json({ error: err }, 400);
           const { meta } = await env.DB.prepare(
             `UPDATE player_test_cases SET module = ?, tc_code = ?, title = ?, tc_type = ?, priority = ?, preconditions = ?,
-               steps = ?, test_data = ?, expected = ?, admin_check = ?, images = ?, updated_at = datetime('now') WHERE id = ?`
+               steps = ?, test_data = ?, expected = ?, admin_check = ?, bug_links = ?, images = ?, updated_at = datetime('now') WHERE id = ?`
           ).bind(
             body.module.trim(), (body.tc_code || "").trim(), body.title.trim(), body.tc_type || "Pozitivni", body.priority || "Medium",
-            body.preconditions || "", JSON.stringify(body.steps || []), body.test_data || "", body.expected || "", body.admin_check || "",
+            body.preconditions || "", JSON.stringify(body.steps || []), body.test_data || "", body.expected || "", body.admin_check || "", normBugLinks(body.bug_links),
             JSON.stringify(body.images || []), playerTcMatch[1]
           ).run();
           if (!meta.changes) return json({ error: "Test case nije pronađen" }, 404);
@@ -641,6 +641,13 @@ function extractJiraFieldDisplayValue(value) {
 function playerSuite(s) {
   s = String(s || "").trim().toLowerCase();
   return /^[a-z0-9-]{1,30}$/.test(s) ? s : "player";
+}
+
+// Jira linkovi bugova: jedan po redu; samo http(s) linkovi ili Jira ključevi (npr. SPORTS-7637)
+function normBugLinks(v) {
+  return String(v || "").split(/[\r\n]+/).map(s => s.trim()).filter(Boolean)
+    .filter(s => /^https?:\/\/\S+$/i.test(s) || /^[A-Z][A-Z0-9]+-\d+$/.test(s.toUpperCase()))
+    .map(s => /^https?:/i.test(s) ? s : s.toUpperCase()).slice(0, 20).join("\n");
 }
 
 // Validacija tijela za Player TC (POST/PUT). Vraća poruku greške ili null.
