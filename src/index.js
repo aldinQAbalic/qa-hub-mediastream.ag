@@ -404,6 +404,14 @@ export default {
           ).run();
           return json({ id: meta.last_row_id });
         }
+        // Napredak po suiteu (za kartice na Workspaceu)
+        if (pathname === "/api/player-tcs/progress" && request.method === "GET") {
+          const { results } = await env.DB.prepare(
+            `SELECT suite, COUNT(*) AS total, SUM(CASE WHEN done_at IS NOT NULL THEN 1 ELSE 0 END) AS done
+             FROM player_test_cases GROUP BY suite`
+          ).all();
+          return json(results);
+        }
         // Regresija: označi TC kao testiran / poništi oznaku
         const playerDoneMatch = pathname.match(/^\/api\/player-tcs\/(\d+)\/done$/);
         if (playerDoneMatch && request.method === "PATCH") {
