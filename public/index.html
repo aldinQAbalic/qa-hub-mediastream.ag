@@ -648,6 +648,15 @@
             <div class="quick-nav-open">Open →</div>
           </div>
         </div>
+        <div class="quick-nav-card" id="qnTerminal">
+          <div class="quick-nav-icon">🖥️</div>
+          <div class="quick-nav-title">TERMINAL</div>
+          <div class="quick-nav-bottom">
+            <div class="quick-nav-sub">Anonimni i registrovani korisnik</div>
+            <div class="quick-nav-progress" id="qnTerminalProgress"></div>
+            <div class="quick-nav-open">Open →</div>
+          </div>
+        </div>
       </div>
 
       <div class="release-grid hidden" id="releaseGrid"></div><!-- release kartice sakrivene na Mediastreamu -->
@@ -1196,7 +1205,7 @@ async function showApp() {
 async function loadPlayerSuiteProgress() {
   let rows = [];
   try { rows = await api("/api/player-tcs/progress"); } catch (e) { return; }
-  [["player", "qnPlayer", "qnPlayerProgress"], ["bonuses", "qnPlayerBonuses", "qnPlayerBonusesProgress"]].forEach(([suite, cardId, progId]) => {
+  [["player", "qnPlayer", "qnPlayerProgress"], ["bonuses", "qnPlayerBonuses", "qnPlayerBonusesProgress"], ["terminal", "qnTerminal", "qnTerminalProgress"]].forEach(([suite, cardId, progId]) => {
     const r = rows.find(x => x.suite === suite) || { total: 0, done: 0 };
     const total = Number(r.total) || 0, done = Number(r.done) || 0;
     const complete = total > 0 && done === total;
@@ -2000,6 +2009,7 @@ document.getElementById("tsCrumbWorkspace").addEventListener("click", showHome);
 // Test suiteovi koji koriste Player stranicu (isti izgled, odvojeni TC-ovi)
 const PL_SUITES = {
   player:  { name: "Player", eyebrow: "PLAYER", desc: "Test caseovi i vodiči za sve što se tiče igrača: registracija, login, profil.", defaultModule: "Registracija" },
+  terminal: { name: "Terminal", eyebrow: "TERMINAL", desc: "Test caseovi za terminal u shopu: anonimni korisnik, registrovani korisnik (isto kao na frontendu) i cashier.", defaultModule: "Anonimni korisnik" },
   bonuses: { name: "Player - Bonuses", eyebrow: "PLAYER - BONUSES", desc: "Test caseovi za bonuse – prvo admin panel (kreiranje i podešavanje bonusa), zatim prikaz i korištenje kod igrača.", defaultModule: "Admin - Bonuses" },
 };
 let plSuite = "player";
@@ -2007,6 +2017,7 @@ let plSuite = "player";
 // Redoslijed tabova (modula) po suiteu; moduli koji nisu na listi idu na kraj, abecedno
 const PL_MODULE_ORDER = {
   player: ["Registracija", "Change Password", "Login", "KYC", "Deposit", "Sport Tickets", "Withdrawal", "Logs", "Payments history", "Manage Cards", "Responsible Gambling", "Transaction list"],
+  terminal: ["Anonimni korisnik", "Registrovani korisnik", "Cashier"],
   bonuses: ["Admin - Bonuses", "Player - Bonuses", "Bonus - Registracija", "Bonus - Tiketi", "Bonus - Terminal", "Affiliate"],
 };
 function plModuleRank(m) {
@@ -2290,6 +2301,7 @@ document.getElementById("qnRelease").addEventListener("click", () => {
 document.getElementById("qnTestSuites").addEventListener("click", openTestSuitesView);
 document.getElementById("qnPlayer").addEventListener("click", () => openPlayerView("player"));
 document.getElementById("qnPlayerBonuses").addEventListener("click", () => openPlayerView("bonuses"));
+document.getElementById("qnTerminal").addEventListener("click", () => openPlayerView("terminal"));
 // ===== Player: detaljni test caseovi =====
 let plTcs = [];
 let plModule = "";          // "" = svi moduli
