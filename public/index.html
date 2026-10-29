@@ -2007,7 +2007,7 @@ let plSuite = "player";
 // Redoslijed tabova (modula) po suiteu; moduli koji nisu na listi idu na kraj, abecedno
 const PL_MODULE_ORDER = {
   player: ["Registracija", "Change Password", "Login", "KYC", "Deposit", "Sport Tickets", "Withdrawal", "Logs", "Payments history", "Manage Cards", "Responsible Gambling", "Transaction list"],
-  bonuses: ["Admin - Bonuses", "Player - Bonuses", "Bonus - Registracija", "Bonus - Tiketi", "Bonus - Terminal"],
+  bonuses: ["Admin - Bonuses", "Player - Bonuses", "Bonus - Registracija", "Bonus - Tiketi", "Bonus - Terminal", "Affiliate"],
 };
 function plModuleRank(m) {
   const order = (PL_MODULE_ORDER[plSuite] || []).map(x => x.toLowerCase());
