@@ -1,0 +1,47 @@
+-- Terminal: Login postavke terminala (Admin → Terminals → General → Login: Automatic / Customer / Disabled / Cashdesk).
+-- wrangler d1 execute qa-hub-mediastream-db --remote --file=./terminal-login-settings.sql
+
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) SELECT 'terminal', 'Login postavke terminala', 'TRM-S01', 'Login = Automatic – dozvoljeno sve', 'Pozitivni', 'High', 'Testni terminal u shopu (staging) je uključen i spojen.
+Cashier je startao smjenu na tom terminalu (ili Shift required = FALSE).
+Pristup admin panelu → Terminals.
+Registrovani testni igrač (KYC verifikovan, sa stanjem) i cashier nalog.
+Zapamti prvobitnu vrijednost polja Login i vrati je na kraju.', '["Admin → Terminals → otvori testni terminal (isti ID kao u donjoj traci terminala) → sekcija General → Login = Automatic, sačuvaj.", "Na terminalu, bez prijave, ubaci novac i uplati tiket (anonimno).", "Prijavi se registrovanim igračem, uplati novac i tiket sa stanja, otvori Customer Area, odjavi se.", "Prijavi se kao cashier (cashdesk) na istom terminalu i provjeri pristup."]', 'Login = Automatic', 'Automatic dozvoljava sve: anonimno igranje (ubacivanje novca, uplata tiketa), prijavu registrovanog igrača sa svim funkcijama i rad kao cashdesk.
+Nema poruka o zabrani ni blokiranog akceptora novca.
+Zabilježiti da li se promjena primjenjuje odmah ili tek nakon osvježavanja/restarta terminala.', 'Terminals → testni terminal → General → Login je sačuvan kao Automatic.
+Transakcije terminala (cash in, tiketi) odgovaraju dozvoljenim radnjama za Automatic – nema transakcija za radnje koje su trebale biti blokirane.', '[{"src": "/player-guide/trm-s-login-postavka.jpg", "caption": "Admin → Terminals → terminal → General → Login (Automatic / Cashdesk / Customer / Disabled)"}]', 0, 'Claude' WHERE NOT EXISTS (SELECT 1 FROM player_test_cases WHERE suite = 'terminal' AND tc_code = 'TRM-S01');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) SELECT 'terminal', 'Login postavke terminala', 'TRM-S02', 'Login = Customer – samo prijavljeni igrači', 'Negativni', 'High', 'Testni terminal u shopu (staging) je uključen i spojen.
+Cashier je startao smjenu na tom terminalu (ili Shift required = FALSE).
+Pristup admin panelu → Terminals.
+Registrovani testni igrač (KYC verifikovan, sa stanjem) i cashier nalog.
+Zapamti prvobitnu vrijednost polja Login i vrati je na kraju.', '["Admin → Terminals → otvori testni terminal (isti ID kao u donjoj traci terminala) → sekcija General → Login = Customer, sačuvaj.", "Na terminalu, bez prijave, pokušaj ubaciti novac i uplatiti tiket.", "Prijavi se registrovanim igračem, uplati novac i tiket sa stanja, odjavi se.", "Pokušaj pristup kao cashier (cashdesk)."]', 'Login = Customer', 'Bez prijave: ubacivanje novca i uplata tiketa NISU mogući; terminal jasno traži prijavu (LOGIN). Novac se ne smije "izgubiti" – ako je prihvaćen, mora biti vraćen ili vidljiv.
+Prijavljeni igrač: sve funkcije rade normalno (kao na frontendu).
+Cashdesk pristup nije dozvoljen (zabilježiti stvarno ponašanje).
+Pregled ponude bez prijave – zabilježiti da li je dostupan.
+Zabilježiti da li se promjena primjenjuje odmah ili tek nakon osvježavanja/restarta terminala.', 'Terminals → testni terminal → General → Login je sačuvan kao Customer.
+Transakcije terminala (cash in, tiketi) odgovaraju dozvoljenim radnjama za Customer – nema transakcija za radnje koje su trebale biti blokirane.', '[{"src": "/player-guide/trm-s-login-postavka.jpg", "caption": "Admin → Terminals → terminal → General → Login (Automatic / Cashdesk / Customer / Disabled)"}]', 1, 'Claude' WHERE NOT EXISTS (SELECT 1 FROM player_test_cases WHERE suite = 'terminal' AND tc_code = 'TRM-S02');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) SELECT 'terminal', 'Login postavke terminala', 'TRM-S03', 'Login = Disabled – terminal se ne može koristiti', 'Negativni', 'High', 'Testni terminal u shopu (staging) je uključen i spojen.
+Cashier je startao smjenu na tom terminalu (ili Shift required = FALSE).
+Pristup admin panelu → Terminals.
+Registrovani testni igrač (KYC verifikovan, sa stanjem) i cashier nalog.
+Zapamti prvobitnu vrijednost polja Login i vrati je na kraju.', '["Admin → Terminals → otvori testni terminal (isti ID kao u donjoj traci terminala) → sekcija General → Login = Disabled, sačuvaj.", "Na terminalu, bez prijave, pokušaj ubaciti novac i uplatiti tiket.", "Pokušaj se prijaviti registrovanim igračem.", "Pokušaj pristup kao cashier (cashdesk)."]', 'Login = Disabled', 'Terminal ne dozvoljava nikakvo korištenje: nema anonimnog igranja, nema prijave igrača, nema cashdesk pristupa.
+Terminal prikazuje jasnu poruku da nije dostupan; akceptor novca ne prima novac.
+Postojeći kredit na terminalu (ako ga ima) se ne gubi – zabilježiti šta se s njim dešava.
+Zabilježiti da li se promjena primjenjuje odmah ili tek nakon osvježavanja/restarta terminala.', 'Terminals → testni terminal → General → Login je sačuvan kao Disabled.
+Transakcije terminala (cash in, tiketi) odgovaraju dozvoljenim radnjama za Disabled – nema transakcija za radnje koje su trebale biti blokirane.', '[{"src": "/player-guide/trm-s-login-postavka.jpg", "caption": "Admin → Terminals → terminal → General → Login (Automatic / Cashdesk / Customer / Disabled)"}]', 2, 'Claude' WHERE NOT EXISTS (SELECT 1 FROM player_test_cases WHERE suite = 'terminal' AND tc_code = 'TRM-S03');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) SELECT 'terminal', 'Login postavke terminala', 'TRM-S04', 'Login = Cashdesk – terminal radi kao cashdesk', 'Pozitivni', 'High', 'Testni terminal u shopu (staging) je uključen i spojen.
+Cashier je startao smjenu na tom terminalu (ili Shift required = FALSE).
+Pristup admin panelu → Terminals.
+Registrovani testni igrač (KYC verifikovan, sa stanjem) i cashier nalog.
+Zapamti prvobitnu vrijednost polja Login i vrati je na kraju.', '["Admin → Terminals → otvori testni terminal (isti ID kao u donjoj traci terminala) → sekcija General → Login = Cashdesk, sačuvaj.", "Pogledaj početni ekran terminala.", "Prijavi se kao cashier i provjeri cashdesk funkcije (smjena, uplata/isplata, tiketi).", "Pokušaj anonimno ubaciti novac i prijaviti se registrovanim igračem."]', 'Login = Cashdesk', 'Terminal se ponaša kao cashdesk: prikazuje cashdesk/cashier ekran i funkcije (kao u modulu Cashier).
+Anonimno igranje i samostalna prijava igrača (self-service) nisu dostupni – zabilježiti stvarno ponašanje.
+Cashdesk transakcije se bilježe na cashiera i smjenu.
+Zabilježiti da li se promjena primjenjuje odmah ili tek nakon osvježavanja/restarta terminala.', 'Terminals → testni terminal → General → Login je sačuvan kao Cashdesk.
+Transakcije terminala (cash in, tiketi) odgovaraju dozvoljenim radnjama za Cashdesk – nema transakcija za radnje koje su trebale biti blokirane.', '[{"src": "/player-guide/trm-s-login-postavka.jpg", "caption": "Admin → Terminals → terminal → General → Login (Automatic / Cashdesk / Customer / Disabled)"}]', 3, 'Claude' WHERE NOT EXISTS (SELECT 1 FROM player_test_cases WHERE suite = 'terminal' AND tc_code = 'TRM-S04');
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) SELECT 'terminal', 'Login postavke terminala', 'TRM-S05', 'Promjena Login postavke dok terminal ima kredit / prijavljenog igrača', 'Granične vrijednosti', 'Medium', 'Testni terminal u shopu (staging) je uključen i spojen.
+Cashier je startao smjenu na tom terminalu (ili Shift required = FALSE).
+Pristup admin panelu → Terminals.
+Registrovani testni igrač (KYC verifikovan, sa stanjem) i cashier nalog.
+Zapamti prvobitnu vrijednost polja Login i vrati je na kraju.', '["Login = Automatic: anonimno ubaci 5 € (ne igraj).", "Admin → Terminals → otvori testni terminal (isti ID kao u donjoj traci terminala) → sekcija General → Login = Customer, sačuvaj. Provjeri kredit na terminalu.", "Vrati Automatic, prijavi registrovanog igrača i ostavi ga prijavljenog.", "Admin → Terminals → otvori testni terminal (isti ID kao u donjoj traci terminala) → sekcija General → Login = Disabled, sačuvaj. Provjeri šta se dešava sa prijavljenim igračem.", "Vrati prvobitnu vrijednost Login."]', 'Login = Customer / Disabled', 'Anonimni kredit se ne gubi pri promjeni postavke – ostaje vidljiv ili se može vratiti (zabilježiti tačno ponašanje).
+Prijavljeni igrač se uredno odjavljuje ili blokira uz jasnu poruku; stanje igrača je nepromijenjeno.
+Nema grešaka ni "zaglavljenog" ekrana na terminalu.', 'Terminals → testni terminal → General → Login je sačuvan kao Customer / Disabled.
+Transakcije terminala (cash in, tiketi) odgovaraju dozvoljenim radnjama za Customer / Disabled – nema transakcija za radnje koje su trebale biti blokirane.', '[{"src": "/player-guide/trm-s-login-postavka.jpg", "caption": "Admin → Terminals → terminal → General → Login (Automatic / Cashdesk / Customer / Disabled)"}]', 4, 'Claude' WHERE NOT EXISTS (SELECT 1 FROM player_test_cases WHERE suite = 'terminal' AND tc_code = 'TRM-S05');
