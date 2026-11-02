@@ -469,9 +469,17 @@
   .pl-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
   .pl-card.open { border-color: var(--blue); }
   .pl-card-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
-  .pl-check { display: flex; align-items: center; padding: 4px; margin: -4px 0 -4px -4px; cursor: pointer; flex-shrink: 0; }
-  .pl-check input { width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; margin: 0; }
+  .pl-check { display: flex; align-items: center; gap: 4px; margin: -4px 0 -4px -4px; flex-shrink: 0; }
+  .pl-res { width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 14px; font-weight: 800; line-height: 1; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; opacity: .55; transition: all .15s ease; }
+  .pl-res:hover { opacity: 1; }
+  .pl-res.pass:hover, .pl-res.pass.on { color: #fff; background: var(--green); border-color: var(--green); opacity: 1; }
+  .pl-res.fail:hover, .pl-res.fail.on { color: #fff; background: var(--red); border-color: var(--red); opacity: 1; }
   .pl-card.done { border-color: rgba(34,197,94,0.35); }
+  .pl-card.done.failed { border-color: rgba(244,63,94,0.55); }
+  .pl-done-by.fail { color: var(--red); }
+  .pl-progress-label .pl-pass { color: var(--green); }
+  .pl-progress-label .pl-fail { color: var(--red); }
+  .quick-nav-progress .qn-fail { color: var(--red); font-weight: 700; }
   .pl-card.done .pl-title { color: var(--muted); }
   .pl-done-by { font-size: 11px; color: var(--green); white-space: nowrap; }
   .pl-progress { display: flex; align-items: center; gap: 14px; margin: 0 0 6px; }
@@ -1216,10 +1224,11 @@ async function loadPlayerSuiteProgress() {
   try { rows = await api("/api/player-tcs/progress"); } catch (e) { return; }
   [["player", "qnPlayer", "qnPlayerProgress"], ["bonuses", "qnPlayerBonuses", "qnPlayerBonusesProgress"], ["terminal", "qnTerminal", "qnTerminalProgress"], ["trader", "qnTrader", "qnTraderProgress"]].forEach(([suite, cardId, progId]) => {
     const r = rows.find(x => x.suite === suite) || { total: 0, done: 0 };
-    const total = Number(r.total) || 0, done = Number(r.done) || 0;
+    const total = Number(r.total) || 0, done = Number(r.done) || 0, failed = Number(r.failed) || 0;
     const complete = total > 0 && done === total;
     document.getElementById(cardId).classList.toggle("complete", complete);
-    document.getElementById(progId).textContent = total ? (complete ? `✓ Sve testirano (${total})` : `Testirano ${done} / ${total}`) : "";
+    const failTxt = failed ? ` · <span class="qn-fail">✕ ${failed}</span>` : "";
+    document.getElementById(progId).innerHTML = total ? (complete ? `✓ Sve testirano (${total})` : `Testirano ${done} / ${total}`) + failTxt : "";
   });
 }
 
@@ -2019,7 +2028,7 @@ document.getElementById("tsCrumbWorkspace").addEventListener("click", showHome);
 const PL_SUITES = {
   player:  { name: "Player", eyebrow: "PLAYER", desc: "Test caseovi i vodiči za sve što se tiče igrača: registracija, login, profil.", defaultModule: "Registracija" },
   terminal: { name: "Terminal", eyebrow: "TERMINAL", desc: "Test caseovi za terminal u shopu: anonimni korisnik, registrovani korisnik (isto kao na frontendu) i cashier.", defaultModule: "Anonimni korisnik" },
-  trader: { name: "Trader", eyebrow: "TRADER", desc: "Test caseovi za Trader (trading).", defaultModule: "Trader" },
+  trader: { name: "Trader", eyebrow: "TRADER", desc: "Test caseovi za Trader u admin panelu: trading pravila (Bypass / Deny), risk templatei i bet acceptance.", defaultModule: "Trading Rules (Bypass / Deny)" },
   bonuses: { name: "Player - Bonuses", eyebrow: "PLAYER - BONUSES", desc: "Test caseovi za bonuse – prvo admin panel (kreiranje i podešavanje bonusa), zatim prikaz i korištenje kod igrača.", defaultModule: "Admin - Bonuses" },
 };
 let plSuite = "player";
@@ -2028,7 +2037,7 @@ let plSuite = "player";
 const PL_MODULE_ORDER = {
   player: ["Registracija", "Change Password", "Login", "KYC", "Deposit", "Sport Tickets", "Withdrawal", "Logs", "Payments history", "Manage Cards", "Responsible Gambling", "Transaction list"],
   terminal: ["Anonimni korisnik", "Registrovani korisnik", "Login postavke terminala", "Cashier"],
-  trader: ["Trader"],
+  trader: ["Trading Rules (Bypass / Deny)"],
   bonuses: ["Admin - Bonuses", "Player - Bonuses", "Bonus - Registracija", "Bonus - Tiketi", "Bonus - Terminal", "Affiliate"],
 };
 function plModuleRank(m) {
@@ -2398,14 +2407,18 @@ function renderPlayerTcs() {
       lastModule = t.module;
     }
     const card = document.createElement("div");
-    card.className = "pl-card" + (plOpenId === t.id ? " open" : "") + (t.done_at ? " done" : "");
+    const failed = t.done_at && t.done_result === "fail";
+    card.className = "pl-card" + (plOpenId === t.id ? " open" : "") + (t.done_at ? " done" : "") + (failed ? " failed" : "");
     card.innerHTML = `
       <div class="pl-card-head">
-        <label class="pl-check" title="${t.done_at ? "Testirano: " + escapeHtml(t.done_by || "") + ", " + escapeHtml(plFmtDone(t.done_at)) : "Označi kao testirano"}"><input type="checkbox" ${t.done_at ? "checked" : ""} /></label>
+        <div class="pl-check" title="${t.done_at ? (failed ? "Nije prošao" : "Prošao") + ": " + escapeHtml(t.done_by || "") + ", " + escapeHtml(plFmtDone(t.done_at)) : "Označi rezultat testa"}">
+          <button type="button" class="pl-res pass ${t.done_at && !failed ? "on" : ""}" data-res="pass" title="Prošao (zelena kvačica)">✓</button>
+          <button type="button" class="pl-res fail ${failed ? "on" : ""}" data-res="fail" title="Nije prošao (crveni X)">✕</button>
+        </div>
         <div class="pl-code">${escapeHtml(t.tc_code || "#" + t.id)}</div>
         <div class="pl-title">${escapeHtml(t.title)}</div>
         <div class="pl-meta">
-          ${t.done_at ? `<span class="pl-done-by">✓ ${escapeHtml(t.done_by || "")}</span>` : ""}
+          ${t.done_at ? `<span class="pl-done-by ${failed ? "fail" : ""}">${failed ? "✕" : "✓"} ${escapeHtml(t.done_by || "")}</span>` : ""}
           ${plBugList(t.bug_links).length ? `<span class="pl-badge bug" title="${escapeHtml(plBugList(t.bug_links).map(b => b.key).join(", "))}">🐞 ${plBugList(t.bug_links).length === 1 ? escapeHtml(plBugList(t.bug_links)[0].key) : plBugList(t.bug_links).length}</span>` : ""}
           ${t.image_count ? `<span class="pl-badge" title="Slike">🖼 ${t.image_count}</span>` : ""}
           <span class="pl-badge ${plTypeClass(t.tc_type)}">${escapeHtml(t.tc_type)}</span>
@@ -2416,7 +2429,12 @@ function renderPlayerTcs() {
     card.querySelector(".pl-card-head").addEventListener("click", () => togglePlayerTc(t.id));
     const chk = card.querySelector(".pl-check");
     chk.addEventListener("click", e => e.stopPropagation());
-    chk.querySelector("input").addEventListener("change", e => setPlayerTcDone(t, e.target.checked));
+    // Klik na aktivno dugme poništava oznaku; klik na drugo mijenja rezultat
+    chk.querySelectorAll(".pl-res").forEach(btn => btn.addEventListener("click", () => {
+      const res = btn.dataset.res;
+      const active = t.done_at && (t.done_result === "fail" ? "fail" : "pass") === res;
+      setPlayerTcDone(t, !active, res);
+    }));
     wrap.appendChild(card);
     if (plOpenId === t.id) fillPlayerTcBody(card.querySelector(".pl-body"), t.id);
   });
@@ -2444,20 +2462,28 @@ function plFmtDone(s) {
 function renderPlayerProgress() {
   const scope = plTcs.filter(t => !plModule || t.module === plModule);
   const done = scope.filter(t => t.done_at).length;
+  const failedN = scope.filter(t => t.done_at && t.done_result === "fail").length;
   const pct = scope.length ? Math.round(done / scope.length * 100) : 0;
   document.getElementById("plProgress").classList.toggle("hidden", !scope.length);
-  document.getElementById("plProgressLabel").innerHTML = `Testirano${plModule ? " (" + escapeHtml(plModule) + ")" : ""}: <b>${done} / ${scope.length}</b> · ${pct}%`;
-  document.getElementById("plProgressFill").style.width = pct + "%";
+  document.getElementById("plProgressLabel").innerHTML = `Testirano${plModule ? " (" + escapeHtml(plModule) + ")" : ""}: <b>${done} / ${scope.length}</b> · ${pct}%` +
+    (done ? ` · <span class="pl-pass">✓ ${done - failedN}</span> · <span class="pl-fail">✕ ${failedN}</span>` : "");
+  const fill = document.getElementById("plProgressFill");
+  fill.style.width = pct + "%";
+  // zeleni dio = prošli, crveni dio = nisu prošli
+  const passPct = done ? Math.round((done - failedN) / done * 100) : 100;
+  fill.style.background = failedN ? `linear-gradient(90deg, var(--green) 0 ${passPct}%, var(--red) ${passPct}% 100%)` : "";
   document.getElementById("plResetDoneBtn").disabled = done === 0;
 }
 
-async function setPlayerTcDone(t, done) {
-  const prev = { done_at: t.done_at, done_by: t.done_by };
+async function setPlayerTcDone(t, done, result) {
+  const prev = { done_at: t.done_at, done_by: t.done_by, done_result: t.done_result };
+  result = result === "fail" ? "fail" : "pass";
   t.done_at = done ? new Date().toISOString().slice(0, 19).replace("T", " ") : null;
   t.done_by = done ? (currentUser ? currentUser.display_name : "") : "";
+  t.done_result = done ? result : "pass";
   renderPlayerTcs();
   try {
-    await api(`/api/player-tcs/${t.id}/done`, { method: "PATCH", body: JSON.stringify({ done }) });
+    await api(`/api/player-tcs/${t.id}/done`, { method: "PATCH", body: JSON.stringify({ done, result }) });
   } catch (e) {
     Object.assign(t, prev);
     renderPlayerTcs();

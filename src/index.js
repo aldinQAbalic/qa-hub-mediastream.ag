@@ -381,7 +381,7 @@ export default {
         // images = JSON niz { src, caption }; src je ili staticki put (/player-guide/...) ili data URL (upload iz UI-a)
         if (pathname === "/api/player-tcs" && request.method === "GET") {
           const { results } = await env.DB.prepare(
-            `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, bug_links, done_at, done_by,
+            `SELECT id, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, bug_links, done_at, done_by, COALESCE(done_result, 'pass') AS done_result,
                     json_array_length(images) as image_count, order_index, created_by, updated_at
              FROM player_test_cases WHERE suite = ? ORDER BY module, order_index, id`
           ).bind(playerSuite(url.searchParams.get("suite"))).all();
@@ -407,7 +407,8 @@ export default {
         // Napredak po suiteu (za kartice na Workspaceu)
         if (pathname === "/api/player-tcs/progress" && request.method === "GET") {
           const { results } = await env.DB.prepare(
-            `SELECT suite, COUNT(*) AS total, SUM(CASE WHEN done_at IS NOT NULL THEN 1 ELSE 0 END) AS done
+            `SELECT suite, COUNT(*) AS total, SUM(CASE WHEN done_at IS NOT NULL THEN 1 ELSE 0 END) AS done,
+                    SUM(CASE WHEN done_at IS NOT NULL AND done_result = 'fail' THEN 1 ELSE 0 END) AS failed
              FROM player_test_cases GROUP BY suite`
           ).all();
           return json(results);
@@ -415,12 +416,14 @@ export default {
         // Regresija: označi TC kao testiran / poništi oznaku
         const playerDoneMatch = pathname.match(/^\/api\/player-tcs\/(\d+)\/done$/);
         if (playerDoneMatch && request.method === "PATCH") {
-          const { done } = await request.json();
+          // result: "pass" (zelena kvačica) ili "fail" (crveni X) – oba se računaju kao testirano
+          const { done, result } = await request.json();
+          const res = result === "fail" ? "fail" : "pass";
           const { meta } = await env.DB.prepare(
             done
-              ? `UPDATE player_test_cases SET done_at = datetime('now'), done_by = ? WHERE id = ?`
-              : `UPDATE player_test_cases SET done_at = NULL, done_by = '' WHERE id = ?`
-          ).bind(...(done ? [user.display_name, playerDoneMatch[1]] : [playerDoneMatch[1]])).run();
+              ? `UPDATE player_test_cases SET done_at = datetime('now'), done_by = ?, done_result = ? WHERE id = ?`
+              : `UPDATE player_test_cases SET done_at = NULL, done_by = '', done_result = 'pass' WHERE id = ?`
+          ).bind(...(done ? [user.display_name, res, playerDoneMatch[1]] : [playerDoneMatch[1]])).run();
           if (!meta.changes) return json({ error: "Test case nije pronađen" }, 404);
           return json({ ok: true });
         }
