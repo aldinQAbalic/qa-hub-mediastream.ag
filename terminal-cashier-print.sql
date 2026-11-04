@@ -1,0 +1,10 @@
+-- TRM-C04: duplikat tiketa iz Cashier → Tickets – QR kod i barkod.
+-- wrangler d1 execute qa-hub-mediastream-db --remote --file=./terminal-cashier-print.sql
+
+INSERT INTO player_test_cases (suite, module, tc_code, title, tc_type, priority, preconditions, steps, test_data, expected, admin_check, images, order_index, created_by) SELECT 'terminal', 'Cashier', 'TRM-C04', 'Cashier: duplikat tiketa – QR kod i barkod (Print Selected / Print All)', 'Pozitivni', 'High', 'Testni terminal u shopu (staging), cashier je startao smjenu.
+Na terminalu je u toj smjeni uplaćen tiket (npr. 514-1449-279, Combi, 5 €).
+Originalni tiket odštampan odmah nakon uplate.
+Štampač ima papira; skener za provjeru QR/barkoda (cashdesk ili telefon).', '["Uplati tiket na terminalu i sačuvaj original koji se odštampa odmah.", "Kao cashier otvori MEMBER ACCOUNT → TICKETS, označi taj tiket i klikni Print Selected.", "Klikni Print All.", "Uporedi DUPLICATE sa originalom: zaglavlje, selekcije, kvote, iznosi, PIN, ID, QR kod i barkod.", "Skeniraj QR kod i barkod sa duplikata (Ticket search / cashdesk)."]', 'Tiket 514-1449-279 (Combi, 7 selekcija, 5 €)', 'Duplikat ima oznaku DUPLICATE i iste podatke kao original (shop, terminal ID, datum i vrijeme, selekcije, kvote, Total Odds, Stake, Possible Winnings, ID tiketa).
+PIN je skriven (*****) – ispravno.
+QR kod i barkod su ispisani ispravno i čitljivi kao na originalu; skeniranje otvara isti tiket.
+Napomena (bug 04.11.2026): na duplikatima iz Print Selected / Print All umjesto QR koda i barkoda štampa se prazan okvir sa ikonom slike koja se nije učitala.', 'Admin → Tickets: skenirani ID sa duplikata vodi na isti tiket (514-1449-279).', '[{"src": "/player-guide/trm-c04-print-duplicate.jpg", "caption": "Lijevo: original odmah nakon uplate (QR i barkod ispravni). Sredina i desno: DUPLICATE iz Cashier → Tickets (QR i barkod se ne ispisuju). PIN zamagljen."}]', 3, 'Claude' WHERE NOT EXISTS (SELECT 1 FROM player_test_cases WHERE suite = 'terminal' AND tc_code = 'TRM-C04');
