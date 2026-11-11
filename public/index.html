@@ -683,6 +683,15 @@
             <div class="quick-nav-open">Open →</div>
           </div>
         </div>
+        <div class="quick-nav-card" id="qnLiveViewer">
+          <div class="quick-nav-icon">📺</div>
+          <div class="quick-nav-title">LIVE VIEWER</div>
+          <div class="quick-nav-bottom">
+            <div class="quick-nav-sub">Live Betting Conference i WS poruke</div>
+            <div class="quick-nav-progress" id="qnLiveViewerProgress"></div>
+            <div class="quick-nav-open">Open →</div>
+          </div>
+        </div>
       </div>
 
       <div class="release-grid hidden" id="releaseGrid"></div><!-- release kartice sakrivene na Mediastreamu -->
@@ -1231,7 +1240,7 @@ async function showApp() {
 async function loadPlayerSuiteProgress() {
   let rows = [];
   try { rows = await api("/api/player-tcs/progress"); } catch (e) { return; }
-  [["player", "qnPlayer", "qnPlayerProgress"], ["bonuses", "qnPlayerBonuses", "qnPlayerBonusesProgress"], ["terminal", "qnTerminal", "qnTerminalProgress"], ["trader", "qnTrader", "qnTraderProgress"], ["shops", "qnShops", "qnShopsProgress"]].forEach(([suite, cardId, progId]) => {
+  [["player", "qnPlayer", "qnPlayerProgress"], ["bonuses", "qnPlayerBonuses", "qnPlayerBonusesProgress"], ["terminal", "qnTerminal", "qnTerminalProgress"], ["trader", "qnTrader", "qnTraderProgress"], ["shops", "qnShops", "qnShopsProgress"], ["liveviewer", "qnLiveViewer", "qnLiveViewerProgress"]].forEach(([suite, cardId, progId]) => {
     const r = rows.find(x => x.suite === suite) || { total: 0, done: 0 };
     const total = Number(r.total) || 0, done = Number(r.done) || 0, failed = Number(r.failed) || 0;
     const complete = total > 0 && done === total;
@@ -2039,6 +2048,7 @@ const PL_SUITES = {
   terminal: { name: "Terminal", eyebrow: "TERMINAL", desc: "Test caseovi za terminal u shopu: anonimni korisnik, registrovani korisnik (isto kao na frontendu) i cashier.", defaultModule: "Anonimni korisnik" },
   shops: { name: "Shops", eyebrow: "SHOPS", desc: "Test caseovi za shopove: cash balance shopa, cashdesk (tastatura i HID skener) i player kartice.", defaultModule: "Cash Balance" },
   trader: { name: "Trader", eyebrow: "TRADER", desc: "Test caseovi za Trader u admin panelu: trading pravila (Bypass / Deny), risk templatei i bet acceptance.", defaultModule: "Trading Rules (Bypass / Deny)" },
+  liveviewer: { name: "Live Viewer", eyebrow: "LIVE VIEWER", desc: "Test caseovi za live viewer (Live Betting Conference): fixture liste u adminu, WS poruke BETTING_LIVE_VIEWER i prikaz po whitelabelu.", defaultModule: "Live viewer" },
   bonuses: { name: "Player - Bonuses", eyebrow: "PLAYER - BONUSES", desc: "Test caseovi za bonuse – prvo admin panel (kreiranje i podešavanje bonusa), zatim prikaz i korištenje kod igrača.", defaultModule: "Admin - Bonuses" },
 };
 let plSuite = "player";
@@ -2049,6 +2059,7 @@ const PL_MODULE_ORDER = {
   terminal: ["Anonimni korisnik", "Registrovani korisnik", "Login postavke terminala", "Cashier", "Others"],
   trader: ["Trading Rules (Bypass / Deny)"],
   shops: ["Cash Balance", "Cashdesk Scanner", "Player Cards"],
+  liveviewer: ["Live viewer"],
   bonuses: ["Admin - Bonuses", "Player - Bonuses", "Bonus - Registracija", "Bonus - Tiketi", "Bonus - Terminal", "Affiliate"],
 };
 function plModuleRank(m) {
@@ -2335,6 +2346,7 @@ document.getElementById("qnPlayerBonuses").addEventListener("click", () => openP
 document.getElementById("qnTerminal").addEventListener("click", () => openPlayerView("terminal"));
 document.getElementById("qnTrader").addEventListener("click", () => openPlayerView("trader"));
 document.getElementById("qnShops").addEventListener("click", () => openPlayerView("shops"));
+document.getElementById("qnLiveViewer").addEventListener("click", () => openPlayerView("liveviewer"));
 // ===== Player: detaljni test caseovi =====
 let plTcs = [];
 let plModule = "";          // "" = svi moduli
