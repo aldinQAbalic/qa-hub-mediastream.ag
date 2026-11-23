@@ -656,6 +656,15 @@
             <div class="quick-nav-open">Open →</div>
           </div>
         </div>
+        <div class="quick-nav-card" id="qnPlayerDelete">
+          <div class="quick-nav-icon">🗑️</div>
+          <div class="quick-nav-title">PLAYER - DELETE ACCOUNT</div>
+          <div class="quick-nav-bottom">
+            <div class="quick-nav-sub">Brisanje / zatvaranje naloga (API i frontend)</div>
+            <div class="quick-nav-progress" id="qnPlayerDeleteProgress"></div>
+            <div class="quick-nav-open">Open →</div>
+          </div>
+        </div>
         <div class="quick-nav-card" id="qnTerminal">
           <div class="quick-nav-icon">🖥️</div>
           <div class="quick-nav-title">TERMINAL</div>
@@ -1240,7 +1249,7 @@ async function showApp() {
 async function loadPlayerSuiteProgress() {
   let rows = [];
   try { rows = await api("/api/player-tcs/progress"); } catch (e) { return; }
-  [["player", "qnPlayer", "qnPlayerProgress"], ["bonuses", "qnPlayerBonuses", "qnPlayerBonusesProgress"], ["terminal", "qnTerminal", "qnTerminalProgress"], ["trader", "qnTrader", "qnTraderProgress"], ["shops", "qnShops", "qnShopsProgress"], ["liveviewer", "qnLiveViewer", "qnLiveViewerProgress"]].forEach(([suite, cardId, progId]) => {
+  [["player", "qnPlayer", "qnPlayerProgress"], ["bonuses", "qnPlayerBonuses", "qnPlayerBonusesProgress"], ["deleteaccount", "qnPlayerDelete", "qnPlayerDeleteProgress"], ["terminal", "qnTerminal", "qnTerminalProgress"], ["trader", "qnTrader", "qnTraderProgress"], ["shops", "qnShops", "qnShopsProgress"], ["liveviewer", "qnLiveViewer", "qnLiveViewerProgress"]].forEach(([suite, cardId, progId]) => {
     const r = rows.find(x => x.suite === suite) || { total: 0, done: 0 };
     const total = Number(r.total) || 0, done = Number(r.done) || 0, failed = Number(r.failed) || 0;
     const complete = total > 0 && done === total;
@@ -2049,6 +2058,7 @@ const PL_SUITES = {
   shops: { name: "Shops", eyebrow: "SHOPS", desc: "Test caseovi za shopove: cash balance shopa, cashdesk (tastatura i HID skener) i player kartice.", defaultModule: "Cash Balance" },
   trader: { name: "Trader", eyebrow: "TRADER", desc: "Test caseovi za Trader u admin panelu: trading pravila (Bypass / Deny), risk templatei i bet acceptance.", defaultModule: "Trading Rules (Bypass / Deny)" },
   liveviewer: { name: "Live Viewer", eyebrow: "LIVE VIEWER", desc: "Test caseovi za live viewer (Live Betting Conference): fixture liste u adminu, WS poruke BETTING_LIVE_VIEWER i prikaz po whitelabelu.", defaultModule: "Live viewer" },
+  deleteaccount: { name: "Player - Delete Account", eyebrow: "PLAYER - DELETE ACCOUNT", desc: "Test caseovi za brisanje / zatvaranje naloga igrača: API endpoint customer/delete (SPORTS-7659) i tok na desktopu i mobile (SPORTS-7660).", defaultModule: "API - customer/delete" },
   bonuses: { name: "Player - Bonuses", eyebrow: "PLAYER - BONUSES", desc: "Test caseovi za bonuse – prvo admin panel (kreiranje i podešavanje bonusa), zatim prikaz i korištenje kod igrača.", defaultModule: "Admin - Bonuses" },
 };
 let plSuite = "player";
@@ -2060,6 +2070,7 @@ const PL_MODULE_ORDER = {
   trader: ["Trading Rules (Bypass / Deny)"],
   shops: ["Cash Balance", "Cashdesk Scanner", "Player Cards"],
   liveviewer: ["Live viewer", "VAR – poništen gol"],
+  deleteaccount: ["API - customer/delete", "Frontend - Desktop i Mobile"],
   bonuses: ["Admin - Bonuses", "Player - Bonuses", "Bonus - Registracija", "Bonus - Tiketi", "Bonus - Terminal", "Affiliate"],
 };
 function plModuleRank(m) {
@@ -2343,6 +2354,7 @@ document.getElementById("qnRelease").addEventListener("click", () => {
 document.getElementById("qnTestSuites").addEventListener("click", openTestSuitesView);
 document.getElementById("qnPlayer").addEventListener("click", () => openPlayerView("player"));
 document.getElementById("qnPlayerBonuses").addEventListener("click", () => openPlayerView("bonuses"));
+document.getElementById("qnPlayerDelete").addEventListener("click", () => openPlayerView("deleteaccount"));
 document.getElementById("qnTerminal").addEventListener("click", () => openPlayerView("terminal"));
 document.getElementById("qnTrader").addEventListener("click", () => openPlayerView("trader"));
 document.getElementById("qnShops").addEventListener("click", () => openPlayerView("shops"));
