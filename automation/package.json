@@ -1,0 +1,15 @@
+{
+  "name": "qa-hub-automation",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright smoke testovi za Safebet staging-2 – rezultati se šalju u QA Release Hub",
+  "scripts": {
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "dotenv": "16.4.5"
+  }
+}
