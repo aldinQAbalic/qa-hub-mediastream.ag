@@ -113,12 +113,20 @@ test("AUTO-04 · Klik na kvotu dodaje selekciju u betslip", async ({ page }) => 
 
 test("AUTO-05 · Combi: Total Odds = proizvod kvota", async ({ page }) => {
   await openSports(page);
-  const odds = await addSelections(page, 2);
+  await addSelections(page, 2);
   await expect(page.locator(SEL.slipCounter)).toHaveText("2");
-  const totalText = await page.locator(SEL.slipTotalOdd).innerText();
-  const total = num(totalText.split(/\n/).pop());
-  const expected = odds[0] * odds[1];
-  expect(Math.abs(total - expected), `Total Odds ${total}, očekivano ${expected.toFixed(2)} (${odds.join(" × ")})`).toBeLessThanOrEqual(0.011);
+  await expect(page.locator(SEL.slipOdds)).toHaveCount(2);
+  // Kvote uzimamo iz betslipa (mogu se promijeniti između klika i betslipa), a Total Odds čekamo da se preračuna
+  const readSlip = async () => {
+    const odds = (await page.locator(SEL.slipOdds).allTextContents()).map(oddOf);
+    const total = num((await page.locator(SEL.slipTotalOdd).innerText()).split(/\n/).pop());
+    return { odds, total, expected: odds.reduce((a, b) => a * b, 1) };
+  };
+  let last;
+  await expect.poll(async () => { last = await readSlip(); return Math.abs(last.total - last.expected) <= 0.011; },
+    { timeout: 10_000, message: "Total Odds se ne slaže s proizvodom kvota" }).toBe(true).catch(() => {});
+  expect(Math.abs(last.total - last.expected),
+    `Total Odds ${last.total}, očekivano ${last.expected.toFixed(2)} (${last.odds.join(" × ")})`).toBeLessThanOrEqual(0.011);
 });
 
 test("AUTO-06 · Cancel prazni betslip", async ({ page }) => {
