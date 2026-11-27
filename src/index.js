@@ -408,9 +408,32 @@ export default {
         if (pathname === "/api/player-tcs/progress" && request.method === "GET") {
           const { results } = await env.DB.prepare(
             `SELECT suite, COUNT(*) AS total, SUM(CASE WHEN done_at IS NOT NULL THEN 1 ELSE 0 END) AS done,
-                    SUM(CASE WHEN done_at IS NOT NULL AND done_result = 'fail' THEN 1 ELSE 0 END) AS failed
+                    SUM(CASE WHEN done_at IS NOT NULL AND done_result = 'fail' THEN 1 ELSE 0 END) AS failed,
+                    SUM(CASE WHEN bug_links IS NOT NULL AND bug_links != '' THEN 1 ELSE 0 END) AS bugs
              FROM player_test_cases GROUP BY suite`
           ).all();
+          // Ko je i kada zadnji označio TC u svakom suiteu (za kartice na Workspaceu)
+          const { results: last } = await env.DB.prepare(
+            `SELECT suite, done_by, done_at FROM (
+               SELECT suite, done_by, done_at, ROW_NUMBER() OVER (PARTITION BY suite ORDER BY done_at DESC) AS rn
+               FROM player_test_cases WHERE done_at IS NOT NULL
+             ) WHERE rn = 1`
+          ).all();
+          for (const r of results) {
+            const l = last.find(x => x.suite === r.suite);
+            r.last_done_at = l ? l.done_at : null;
+            r.last_done_by = l ? l.done_by : "";
+          }
+          return json(results);
+        }
+        // Zadnji pali TC-ovi (crveni X) iz svih suiteova – za Workspace
+        if (pathname === "/api/player-tcs/failed" && request.method === "GET") {
+          const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "5", 10) || 5, 1), 50);
+          const { results } = await env.DB.prepare(
+            `SELECT id, suite, module, tc_code, title, done_by, done_at, bug_links
+             FROM player_test_cases WHERE done_at IS NOT NULL AND done_result = 'fail'
+             ORDER BY done_at DESC, id DESC LIMIT ?`
+          ).bind(limit).all();
           return json(results);
         }
         // Regresija: označi TC kao testiran / poništi oznaku
