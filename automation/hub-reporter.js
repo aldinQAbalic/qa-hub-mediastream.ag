@@ -1,7 +1,14 @@
 // Šalje rezultate pokretanja u QA Release Hub (POST /api/automation/runs, zaštićeno AUTOMATION_TOKEN-om)
 const os = require("os");
+const path = require("path");
 
 const stripAnsi = s => String(s || "").replace(/\u001b\[[0-9;]*m/g, "");
+
+// Putanja do videa palog testa na laptopu (prikazuje se u hubu uz poruku greške)
+function videoNote(result) {
+  const v = result.attachments.find(a => a.name === "video" && a.path);
+  return v ? `\n\n🎥 Video na laptopu: automation/${path.relative(process.cwd(), v.path).split(path.sep).join("/")}` : "";
+}
 
 class HubReporter {
   onBegin() {
@@ -20,7 +27,7 @@ class HubReporter {
       title: (m ? m[2] : test.title) + (flaky ? " ⚠ prošao tek iz 2. pokušaja" : ""),
       status,
       duration_ms: result.duration,
-      error: status === "failed" ? stripAnsi(result.error && (result.error.message || result.error.value)).slice(0, 3500) : "",
+      error: status === "failed" ? (stripAnsi(result.error && (result.error.message || result.error.value)).slice(0, 3300) + videoNote(result)) : "",
       screenshot: shot ? `data:${shot.contentType || "image/jpeg"};base64,${shot.body.toString("base64")}` : "",
     });
   }

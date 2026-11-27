@@ -17,6 +17,7 @@ module.exports = defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 45_000,
     trace: "off",
+    video: { mode: "retain-on-failure", size: { width: 1440, height: 900 } },   // video se čuva samo za pale testove (test-results/…/video.webm)
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } }],
 });
