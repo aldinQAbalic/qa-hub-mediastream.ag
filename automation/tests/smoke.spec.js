@@ -171,17 +171,39 @@ const HELP_ITEMS = [
 ];
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Sadržaj Help stranice je ili tekst na stranici (Imprint, Terms…) ili iframe s help servera (About Us, FAQs…)
+// Sadržaj Help stranice dolazi u 4 oblika:
+//  1) iframe s help servera (About Us, Contact Us, FAQs, Tutorials, Responsible Gaming, Accessibility, Sports Help)
+//  2) tekst na stranici – Markdown (Imprint, Privacy policy)
+//  3) Terms & Conditions – harmonika (sekcije se otvaraju klikom na "+")
+//  4) Payment Providers – tabela provajdera (Deposit / Withdrawal)
 async function readHelpContent(page, item) {
-  const md = page.locator(SEL.helpWrapper);
+  const wrapper = page.locator(SEL.helpWrapper);
   const ifr = page.locator(SEL.helpIframe);
-  await expect(md.or(ifr).first(), `sadržaj za "${item.name}" se nije pojavio`).toBeVisible({ timeout: 30_000 });
-  if (await md.isVisible()) {
-    await expect(md, `sadržaj za "${item.name}" ne odgovara stavci`).toContainText(item.kw, { timeout: 20_000 });
-    const text = (await page.locator(SEL.helpContent).innerText()).trim();
-    expect(text.length, `tekst za "${item.name}" je prazan ili prekratak`).toBeGreaterThan(50);
+  const pay = page.locator(T("components/PaymentProviders_PaymentProviders"));
+  await expect(wrapper.or(ifr).or(pay).first(), `sadržaj za "${item.name}" se nije pojavio`).toBeVisible({ timeout: 30_000 });
+
+  if (await pay.isVisible()) {
+    await expect(pay, `"${item.name}": nema sekcije Deposit`).toContainText(/deposit/i);
+    await expect(pay, `"${item.name}": nema sekcije Withdrawal`).toContainText(/withdrawal/i);
+    const rows = await pay.locator(T("components/Account/Payments/Common/PaymentProvider_Row")).count();
+    expect(rows, `"${item.name}": broj provajdera u tabeli`).toBeGreaterThan(0);
+    return (await pay.innerText()).trim();
+  }
+
+  if (await wrapper.isVisible()) {
+    await expect(wrapper, `sadržaj za "${item.name}" ne odgovara stavci`).toContainText(item.kw, { timeout: 20_000 });
+    const terms = wrapper.locator(T("components/Terms_H1Content") + " h1");
+    if (await terms.count()) {
+      // harmonika: otvori prvu sekciju i provjeri da se pojave podsekcije
+      const before = (await wrapper.innerText()).length;
+      await terms.first().click();
+      await expect.poll(async () => (await wrapper.innerText()).length, { message: `"${item.name}": sekcija se ne otvara klikom na +`, timeout: 10_000 }).toBeGreaterThan(before + 100);
+    }
+    const text = (await wrapper.innerText()).trim();
+    expect(text.length, `tekst za "${item.name}" je prazan ili prekratak`).toBeGreaterThan(100);
     return text;
   }
+
   const body = page.frameLocator(SEL.helpIframe).locator("body");
   await expect(body, `sadržaj za "${item.name}" (iframe) ne odgovara stavci`).toContainText(item.kw, { timeout: 30_000 });
   const text = (await body.innerText()).trim();
