@@ -553,6 +553,14 @@
   .sn-count { font-size: 12px; color: var(--muted); }
   .sn-count.fail { color: #fb7185; font-weight: 700; }
   .sn-item.soon { cursor: default; opacity: .55; }
+  .sn-suite { padding: 7px 10px 7px 8px; gap: 10px; }
+  .sn-ring { position: relative; width: 28px; height: 28px; flex-shrink: 0; display: inline-flex; }
+  .sn-ring svg circle { transition: stroke-dasharray .3s ease; }
+  .sn-ring-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .sn-item.active .sn-ring-icon svg { stroke: #8fa2ff; }
+  .sn-fail-pill { padding: 1px 7px; border-radius: 99px; background: var(--red-soft); color: #fb7185; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .sn-done { width: 20px; height: 20px; border-radius: 50%; background: var(--green-soft); color: var(--green); font-size: 12px; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .sn-item.soon:hover { background: transparent; color: #c9d1de; }
   .sn-soon { font-size: 10px; font-weight: 700; letter-spacing: .5px; padding: 2px 6px; border-radius: 6px; background: var(--gray-soft); color: var(--muted); }
 
@@ -1520,9 +1528,22 @@ function renderSideNav(active) {
   html += `<div class="sn-label">MANUALNI TESTOVI</div>`;
   WS_SUITES.forEach(({ suite }) => {
     const r = wsProgress.find(x => x.suite === suite) || {};
-    const failed = Number(r.failed) || 0, total = Number(r.total) || 0;
-    const extra = failed ? `<span class="sn-count fail">✕ ${failed}</span>` : (total ? `<span class="sn-count">${total}</span>` : "");
-    html += item(suite, PL_SUITES[suite] ? PL_SUITES[suite].name : suite, extra);
+    const failed = Number(r.failed) || 0, total = Number(r.total) || 0, done = Number(r.done) || 0;
+    const complete = total > 0 && done === total;
+    // Krug napretka oko ikone: zeleno = prošlo, crveno = palo, sivo = netestirano
+    const C = 2 * Math.PI * 11;
+    const pLen = total ? (done - failed) / total * C : 0, fLen = total ? failed / total * C : 0;
+    const ring = `<span class="sn-ring" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 28 28">
+        <circle cx="14" cy="14" r="11" fill="none" stroke="#232c3d" stroke-width="2.5"></circle>
+        ${pLen ? `<circle cx="14" cy="14" r="11" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-dasharray="${pLen.toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 14 14)"></circle>` : ""}
+        ${fLen ? `<circle cx="14" cy="14" r="11" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="${fLen.toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-pLen).toFixed(2)}" transform="rotate(-90 14 14)"></circle>` : ""}
+      </svg><span class="sn-ring-icon">${wsIcon(suite, 13)}</span></span>`;
+    let right = "";
+    if (complete && !failed) right = `<span class="sn-done" title="Sve testirano">✓</span>`;
+    else if (total) right = `<span class="sn-count">${done}/${total}</span>${failed ? `<span class="sn-fail-pill">✕ ${failed}</span>` : ""}`;
+    const name = PL_SUITES[suite] ? PL_SUITES[suite].name : suite;
+    const label = `${name}: ${done} od ${total} testirano, ${done - failed} prošlo, ${failed} palo`;
+    html += `<button type="button" class="sn-item sn-suite ${wsActive === suite ? "active" : ""}" data-nav="${suite}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ring}<span class="sn-name">${escapeHtml(name)}</span>${right}</button>`;
   });
   html += `<div class="sn-label">AUTOMATIZACIJA</div>` + soon("automation", "Automation");
   const failedAll = wsProgress.reduce((n, r) => n + (Number(r.failed) || 0), 0);
