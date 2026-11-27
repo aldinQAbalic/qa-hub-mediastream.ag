@@ -8,7 +8,7 @@ module.exports = defineConfig({
   expect: { timeout: 20_000 },
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  retries: 1,            // pali test se automatski ponovi jednom (zaštita od povremenih timeouta)
   reporter: [["list"], ["./hub-reporter.js"]],
   use: {
     baseURL: process.env.BASE_URL || "https://www.staging-2.safebet.at",

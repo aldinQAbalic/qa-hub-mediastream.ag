@@ -13,9 +13,11 @@ class HubReporter {
     const m = test.title.match(/^(AUTO-\d+)\s*[·:\-–]?\s*(.*)$/);
     const shot = result.attachments.find(a => a.name === "hub-screenshot" && a.body);
     const status = result.status === "passed" ? "passed" : result.status === "skipped" ? "skipped" : "failed";
+    // Ako je test pao pa prošao u ponovljenom pokušaju, u hubu je zelen, ali s oznakom
+    const flaky = status === "passed" && result.retry > 0;
     this.results.set(test.id, {
       code: m ? m[1] : "",
-      title: m ? m[2] : test.title,
+      title: (m ? m[2] : test.title) + (flaky ? " ⚠ prošao tek iz 2. pokušaja" : ""),
       status,
       duration_ms: result.duration,
       error: status === "failed" ? stripAnsi(result.error && (result.error.message || result.error.value)).slice(0, 3500) : "",
