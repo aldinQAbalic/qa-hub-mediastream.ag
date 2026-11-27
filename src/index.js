@@ -169,6 +169,42 @@ export default {
         return json({ ok: true });
       }
 
+      // ===== Automation: Playwright reporter šalje rezultate (zaštićeno tajnim ključem, bez prijave) =====
+      if (pathname === "/api/automation/runs" && request.method === "POST") {
+        const auth = request.headers.get("Authorization") || "";
+        const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+        if (!env.AUTOMATION_TOKEN || token.length < 16 || token !== env.AUTOMATION_TOKEN) {
+          return json({ error: "Neispravan ili nedostaje AUTOMATION_TOKEN" }, 401);
+        }
+        const b = await request.json().catch(() => null);
+        if (!b || !Array.isArray(b.results) || !b.results.length) return json({ error: "Nedostaju rezultati (results)" }, 400);
+        if (b.results.length > 300) return json({ error: "Previše rezultata (max 300)" }, 400);
+        const str = (v, n) => String(v == null ? "" : v).slice(0, n);
+        const num = v => Math.max(0, Math.round(Number(v) || 0));
+        const results = b.results.map(r => {
+          const status = ["passed", "failed", "skipped"].includes(r.status) ? r.status : "failed";
+          let shot = str(r.screenshot, 900000);
+          if (shot && !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(shot)) shot = "";
+          return { code: str(r.code, 40), title: str(r.title, 300), status, duration: num(r.duration_ms), error: str(r.error, 4000), shot };
+        });
+        const passed = results.filter(r => r.status === "passed").length;
+        const failed = results.filter(r => r.status === "failed").length;
+        const skipped = results.filter(r => r.status === "skipped").length;
+        const startedAt = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(String(b.started_at || ""))
+          ? String(b.started_at).replace("T", " ").slice(0, 19) : new Date().toISOString().replace("T", " ").slice(0, 19);
+        const run = await env.DB.prepare(
+          `INSERT INTO automation_runs (started_at, duration_ms, env, base_url, browser, host, total, passed, failed, skipped)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(startedAt, num(b.duration_ms), str(b.env, 40), str(b.base_url, 200), str(b.browser, 60), str(b.host, 60),
+               results.length, passed, failed, skipped).run();
+        const runId = run.meta.last_row_id;
+        const stmts = results.map(r => env.DB.prepare(
+          `INSERT INTO automation_results (run_id, test_code, title, status, duration_ms, error, screenshot) VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).bind(runId, r.code, r.title, r.status, r.duration, r.error, r.shot));
+        for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50));
+        return json({ id: runId, total: results.length, passed, failed, skipped });
+      }
+
       // Sve ostale /api/* rute traže prijavu
       if (pathname.startsWith("/api/")) {
         const user = await requireUser(request, env);
@@ -426,6 +462,33 @@ export default {
           }
           return json(results);
         }
+        // ===== Automation: pregled pokretanja (za prijavljene) =====
+        if (pathname === "/api/automation/runs" && request.method === "GET") {
+          const { results } = await env.DB.prepare(
+            `SELECT id, started_at, duration_ms, env, base_url, browser, host, total, passed, failed, skipped
+             FROM automation_runs ORDER BY id DESC LIMIT 50`
+          ).all();
+          return json(results);
+        }
+        const autoRunMatch = pathname.match(/^\/api\/automation\/runs\/(\d+)$/);
+        if (autoRunMatch && request.method === "GET") {
+          const run = await env.DB.prepare(`SELECT * FROM automation_runs WHERE id = ?`).bind(autoRunMatch[1]).first();
+          if (!run) return json({ error: "Pokretanje nije pronađeno" }, 404);
+          const { results } = await env.DB.prepare(
+            `SELECT id, test_code, title, status, duration_ms, error, ${url.searchParams.get("shots") === "0" ? "'' AS screenshot" : "screenshot"} FROM automation_results
+             WHERE run_id = ? ORDER BY CASE status WHEN 'failed' THEN 0 WHEN 'skipped' THEN 2 ELSE 1 END, test_code, id`
+          ).bind(autoRunMatch[1]).all();
+          return json({ run, results });
+        }
+        if (autoRunMatch && request.method === "DELETE") {
+          if (user.username !== "aldin") return json({ error: "Samo administrator (aldin) može brisati pokretanja" }, 403);
+          await env.DB.batch([
+            env.DB.prepare(`DELETE FROM automation_results WHERE run_id = ?`).bind(autoRunMatch[1]),
+            env.DB.prepare(`DELETE FROM automation_runs WHERE id = ?`).bind(autoRunMatch[1]),
+          ]);
+          return json({ ok: true });
+        }
+
         // ===== Historija regresija =====
         // POST: sačuvaj trenutne oznake (za sve suiteove ili jedan) kao jednu regresiju, pa očisti oznake
         if (pathname === "/api/regressions" && request.method === "POST") {

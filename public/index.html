@@ -662,6 +662,39 @@
   .hist-suite { padding: 10px 14px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); font-size: 13px; }
   .hist-suite b { display: block; margin-bottom: 2px; }
   .hist-back { background: transparent; border: 0; color: #8fa2ff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 14px; }
+  /* Automation */
+  .au-meta-row { display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
+  .au-meta-row .lbl { font-size: 12px; color: var(--muted); }
+  .au-meta-row .val { margin-top: 4px; font-weight: 700; }
+  .au-dots { display: flex; gap: 5px; margin-top: 8px; }
+  .au-dot { width: 14px; height: 22px; border-radius: 4px; background: #232c3d; }
+  .au-dot.ok { background: var(--green); } .au-dot.bad { background: var(--red); }
+  .au-failbox { padding: 14px 16px; border-radius: 12px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3); display: flex; gap: 12px; align-items: center; }
+  .au-okbox { padding: 14px 16px; border-radius: 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.3); color: var(--green); font-weight: 600; }
+  .au-layout { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+  .au-tests { flex: 3 1 560px; min-width: 0; }
+  .au-hist { flex: 1 1 280px; min-width: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .au-hist h2 { margin: 0; padding: 16px 20px; font-size: 16px; border-bottom: 1px solid var(--border); }
+  .au-hist-row { display: flex; gap: 12px; align-items: center; width: 100%; padding: 12px 20px; border: 0; border-bottom: 1px solid #1b2336; background: transparent;
+    color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+  .au-hist-row:hover { background: rgba(255,255,255,0.03); }
+  .au-hist-row.active { background: var(--blue-soft); }
+  .au-hist-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .au-test { border-bottom: 1px solid #1b2336; }
+  .au-test:last-child { border-bottom: 0; }
+  .au-test-head { display: flex; gap: 12px; align-items: center; padding: 13px 20px; }
+  .au-st { width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
+  .au-st.passed { background: var(--green-soft); color: var(--green); }
+  .au-st.failed { background: var(--red); color: #fff; }
+  .au-st.skipped { background: var(--gray-soft); color: var(--muted); }
+  .au-test.failed { background: rgba(244,63,94,0.06); }
+  .au-test-body { display: flex; gap: 16px; flex-wrap: wrap; padding: 0 20px 16px 56px; }
+  .au-err { flex: 1 1 320px; margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); color: #fda4af;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow: auto; }
+  .au-shot { flex: 0 1 240px; padding: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--panel-2); cursor: zoom-in; }
+  .au-shot img { display: block; width: 100%; height: auto; }
+  .au-setup ol { margin: 8px 0 0; padding-left: 20px; line-height: 1.8; }
+  .sn-auto-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   /* Breadcrumb i "Back to Workspace" nisu potrebni – navigacija je u bočnom meniju */
   .breadcrumb, .back-link { display: none !important; }
   @media (max-width: 900px) {
@@ -742,8 +775,9 @@
           <div class="ws-tile-top">
             <span class="ws-icon auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e3b63a" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg></span>
             <div style="flex:1"><h2 id="wsAutoTitle">Automation</h2><div class="ws-card-sub">Playwright · staging-2 · pokreće se s laptopa preko VPN-a</div></div>
+            <button type="button" class="bg-chip" id="wsAutoDetailsBtn">Detalji →</button>
           </div>
-          <div class="ws-empty">Još nema pokretanja. Automatski testovi su sljedeći korak – kad ih podesimo, ovdje će se vidjeti zadnje pokretanje, rezultat ✓ / ✕, trajanje i historija. Pokretanje: <code>npm run e2e</code></div>
+          <div id="wsAutoBody"><div class="ws-empty">Učitavam…</div></div>
         </section>
         <section class="ws-card narrow" aria-labelledby="wsFailTitle">
           <div class="ws-section-head" style="margin:0"><h2 id="wsFailTitle">Zadnji pali TC-ovi</h2><button type="button" class="bg-chip" id="wsAllBugsBtn">Svi bugovi →</button></div>
@@ -1092,6 +1126,22 @@
     </div><!-- /testSuitesView -->
 
     <!-- ===== PLAYER ===== -->
+    <!-- ===== AUTOMATION ===== -->
+    <div id="automationView" class="hidden">
+      <div class="ws-head">
+        <div>
+          <div class="ws-eyebrow" style="color:#e3b63a">AUTOMATION · PLAYWRIGHT</div>
+          <h1 id="auTitle">Automation</h1>
+          <p id="auMeta"></p>
+        </div>
+        <div class="ws-head-actions">
+          <span class="ws-code" style="padding:10px 12px">npm run e2e</span>
+          <button type="button" class="ws-btn danger hidden" id="auDeleteBtn">Obriši pokretanje</button>
+        </div>
+      </div>
+      <div id="auBody"></div>
+    </div>
+
     <!-- ===== HISTORIJA REGRESIJA ===== -->
     <div id="historyView" class="hidden">
       <div id="histListWrap">
@@ -1545,13 +1595,14 @@ function renderSideNav(active) {
     const label = `${name}: ${done} od ${total} testirano, ${done - failed} prošlo, ${failed} palo`;
     html += `<button type="button" class="sn-item sn-suite ${wsActive === suite ? "active" : ""}" data-nav="${suite}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ring}<span class="sn-name">${escapeHtml(name)}</span>${right}</button>`;
   });
-  html += `<div class="sn-label">AUTOMATIZACIJA</div>` + soon("automation", "Automation");
+  const auDot = auRuns.length ? `<span class="sn-auto-dot" style="background:${auRuns[0].failed ? "var(--red)" : "var(--green)"}" title="Zadnje pokretanje: ${auRuns[0].failed ? "palo" : "prošlo"}"></span>` : "";
+  html += `<div class="sn-label">AUTOMATIZACIJA</div>` + item("automation", "Automation", auDot);
   const failedAll = wsProgress.reduce((n, r) => n + (Number(r.failed) || 0), 0);
   html += `<div class="sn-label">PREGLED</div>` + item("bugs", "Bugovi", failedAll ? `<span class="sn-count fail">✕ ${failedAll}</span>` : "") + item("history", "Historija regresije");
   nav.innerHTML = html;
   nav.querySelectorAll("[data-nav]").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.nav;
-    if (k === "home") showHome(); else if (k === "bugs") showBugsView(); else if (k === "history") showHistoryView(); else openPlayerView(k);
+    if (k === "home") showHome(); else if (k === "bugs") showBugsView(); else if (k === "history") showHistoryView(); else if (k === "automation") showAutomationView(); else openPlayerView(k);
   }));
 }
 
@@ -1575,7 +1626,9 @@ async function loadPlayerSuiteProgress() {
   try { rows = await api("/api/player-tcs/progress"); } catch (e) { return; }
   try { fails = await api("/api/player-tcs/failed?limit=5"); } catch (e) { fails = null; }
   wsProgress = rows;
+  try { auRuns = await api("/api/automation/runs"); } catch (e) { auRuns = []; }
   renderSideNav();
+  renderWsAutomation();
 
   // Pregled na vrhu
   let total = 0, done = 0, failed = 0;
@@ -1594,7 +1647,7 @@ async function loadPlayerSuiteProgress() {
     <div class="ws-stat"><div class="ws-stat-label">Testirano</div><div class="ws-stat-value">${done} <small>${pct}%</small></div><div class="ws-stat-bar"><div style="width:${pct}%"></div></div></div>
     <div class="ws-stat"><div class="ws-stat-label">Prošlo</div><div class="ws-stat-value" style="color:var(--green)">✓ ${passed}</div><div class="ws-stat-sub">${done ? Math.round(passed / done * 100) + "% testiranih" : "—"}</div></div>
     <div class="ws-stat ${failed ? "fail" : ""}"><div class="ws-stat-label">Palo</div><div class="ws-stat-value" style="color:${failed ? "#fb7185" : "var(--text)"}">✕ ${failed}</div><div class="ws-stat-sub">${failBy.length ? escapeHtml(failBy.join(" · ")) : "Nema palih TC-ova"}</div></div>
-    <div class="ws-stat"><div class="ws-stat-label">Automation</div><div class="ws-stat-value"><small>—</small></div><div class="ws-stat-sub">Još nema pokretanja</div></div>`;
+    ${auStatHtml()}`;
 
   // Kartice suiteova
   document.getElementById("wsTiles").innerHTML = WS_SUITES.map(({ suite, sub }) => {
@@ -1647,6 +1700,7 @@ async function showBugsView() {
   document.querySelectorAll("#mainContent > div").forEach(d => d.classList.add("hidden"));
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("bugsView").classList.remove("hidden");
+  window.scrollTo(0, 0);
   renderSideNav("bugs");
   const sel = document.getElementById("bgSuite");
   if (sel.options.length === 1) WS_SUITES.forEach(({ suite }) => sel.add(new Option(PL_SUITES[suite] ? PL_SUITES[suite].name : suite, suite)));
@@ -1688,6 +1742,133 @@ document.querySelectorAll("#bugsView [data-bgf]").forEach(b => b.addEventListene
 }));
 document.getElementById("bgSuite").addEventListener("change", renderBugs);
 document.getElementById("wsAllBugsBtn").addEventListener("click", showBugsView);
+
+// ===== Automation =====
+let auRuns = [];
+function auDur(ms) {
+  const s = Math.round((Number(ms) || 0) / 1000);
+  return s >= 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s} s`;
+}
+function auStatHtml() {
+  if (!auRuns.length) return `<div class="ws-stat"><div class="ws-stat-label">Automation</div><div class="ws-stat-value"><small>—</small></div><div class="ws-stat-sub">Još nema pokretanja</div></div>`;
+  const r = auRuns[0];
+  return `<div class="ws-stat ${r.failed ? "fail" : ""}"><div class="ws-stat-label">Automation</div><div class="ws-stat-value">${r.passed} <small>/ ${r.total}</small></div><div class="ws-stat-sub">${escapeHtml(wsFmt(r.started_at))} · ${escapeHtml(auDur(r.duration_ms))}</div></div>`;
+}
+function auDotsHtml() {
+  const last = auRuns.slice(0, 10).reverse();
+  const ok = last.filter(r => !r.failed).length;
+  return `<div class="au-dots" role="img" aria-label="Zadnjih ${last.length} pokretanja: ${ok} prošlo, ${last.length - ok} palo">${last.map(r => `<span class="au-dot ${r.failed ? "bad" : "ok"}" title="#${r.id} · ${escapeHtml(wsFmt(r.started_at))} · ${r.passed}/${r.total}"></span>`).join("")}</div>`;
+}
+async function renderWsAutomation() {
+  const body = document.getElementById("wsAutoBody");
+  if (!auRuns.length) {
+    body.innerHTML = `<div class="ws-empty">Još nema pokretanja. Kad na laptopu (spojen na VPN) pokreneš <code>npm run e2e</code>, rezultat se pojavi ovdje.</div>`;
+    return;
+  }
+  const r = auRuns[0];
+  let failHtml = `<div class="au-okbox">✓ Svi testovi su prošli</div>`;
+  if (r.failed) {
+    failHtml = `<div class="au-failbox"><span style="color:#fb7185;font-weight:800">✕</span><div style="flex:1;min-width:0"><div style="font-weight:600">${r.failed} ${r.failed === 1 ? "test je pao" : "testova je palo"}</div><div class="ws-fail-meta" id="wsAutoFailName">Učitavam…</div></div></div>`;
+  }
+  body.innerHTML = `<div style="display:flex;flex-direction:column;gap:16px">
+    <div class="au-meta-row">
+      <div><div class="lbl">Zadnje pokretanje</div><div class="val">${escapeHtml(wsFmt(r.started_at))}</div></div>
+      <div><div class="lbl">Rezultat</div><div class="val"><span style="color:var(--green)">✓ ${r.passed}</span> · <span style="color:#fb7185">✕ ${r.failed}</span>${r.skipped ? ` · <span style="color:var(--muted)">preskočeno ${r.skipped}</span>` : ""}</div></div>
+      <div><div class="lbl">Trajanje</div><div class="val">${escapeHtml(auDur(r.duration_ms))}</div></div>
+      <div style="margin-left:auto"><div class="lbl">Zadnjih ${Math.min(10, auRuns.length)} pokretanja</div>${auDotsHtml()}</div>
+    </div>
+    ${failHtml}
+  </div>`;
+  if (r.failed) {
+    try {
+      const d = await api(`/api/automation/runs/${r.id}?shots=0`);
+      const f = d.results.filter(x => x.status === "failed");
+      const el = document.getElementById("wsAutoFailName");
+      if (el) el.textContent = f.map(x => `${x.test_code} · ${x.title}`).slice(0, 3).join("  |  ") + (f.length > 3 ? " …" : "");
+    } catch (e) {}
+  }
+}
+document.getElementById("wsAutoDetailsBtn").addEventListener("click", () => showAutomationView());
+
+let auCurrent = null;
+async function showAutomationView(runId) {
+  document.querySelectorAll("#mainContent > div").forEach(d => d.classList.add("hidden"));
+  document.getElementById("mainContent").classList.remove("hidden");
+  document.getElementById("automationView").classList.remove("hidden");
+  window.scrollTo(0, 0);
+  renderSideNav("automation");
+  const body = document.getElementById("auBody");
+  body.innerHTML = `<div class="ws-empty">Učitavam…</div>`;
+  try { auRuns = await api("/api/automation/runs"); }
+  catch (e) { body.innerHTML = `<div class="ws-empty">Ne mogu učitati pokretanja: ${escapeHtml(e.message)}. Ako je ovo prvo pokretanje, pokreni migration-automation.sql.</div>`; return; }
+  renderSideNav("automation");
+  if (!auRuns.length) {
+    document.getElementById("auTitle").textContent = "Automation";
+    document.getElementById("auMeta").textContent = "Playwright testovi za staging-2, pokreću se s laptopa preko VPN-a.";
+    document.getElementById("auDeleteBtn").classList.add("hidden");
+    body.innerHTML = `<div class="ws-empty au-setup">Još nema pokretanja. Kad testovi budu podešeni na laptopu:
+      <ol><li>Spoji se na VPN.</li><li>U folderu <code>automation</code> pokreni <code>npm run e2e</code>.</li><li>Rezultat se automatski pošalje ovdje.</li></ol></div>`;
+    return;
+  }
+  openAutomationRun(runId || auRuns[0].id);
+}
+async function openAutomationRun(id) {
+  const body = document.getElementById("auBody");
+  let d;
+  try { d = await api(`/api/automation/runs/${id}`); }
+  catch (e) { body.innerHTML = `<div class="ws-empty">${escapeHtml(e.message)}</div>`; return; }
+  auCurrent = d.run;
+  const r = d.run;
+  document.getElementById("auTitle").textContent = `Pokretanje #${r.id}`;
+  document.getElementById("auMeta").textContent = [wsFmt(r.started_at), r.env, r.browser, r.host].filter(Boolean).join(" · ");
+  document.getElementById("auDeleteBtn").classList.toggle("hidden", !(currentUser && currentUser.username === "aldin"));
+  const rows = d.results.map((t, i) => {
+    const icon = t.status === "passed" ? "✓" : (t.status === "failed" ? "✕" : "–");
+    const detail = t.status === "failed" ? `<div class="au-test-body">
+        ${t.error ? `<pre class="au-err">${escapeHtml(t.error)}</pre>` : ""}
+        ${t.screenshot ? `<button type="button" class="au-shot" data-i="${i}" aria-label="Uvećaj screenshot"><img src="${escapeHtml(t.screenshot)}" alt="Screenshot greške za ${escapeHtml(t.test_code)}" /></button>` : ""}
+      </div>` : "";
+    return `<div class="au-test ${t.status}">
+      <div class="au-test-head">
+        <span class="au-st ${t.status}" aria-label="${t.status}">${icon}</span>
+        <span class="ws-fail-code">${escapeHtml(t.test_code)}</span>
+        <span style="flex:1;min-width:0">${escapeHtml(t.title)}</span>
+        <span class="hist-meta">${(t.duration_ms / 1000).toFixed(1).replace(".", ",")} s</span>
+      </div>${detail}</div>`;
+  }).join("");
+  body.innerHTML = `
+    <section class="ws-overview" aria-label="Sažetak pokretanja">
+      <div class="ws-stat"><div class="ws-stat-label">Testova</div><div class="ws-stat-value">${r.total}</div></div>
+      <div class="ws-stat"><div class="ws-stat-label">Prošlo</div><div class="ws-stat-value" style="color:var(--green)">✓ ${r.passed}</div></div>
+      <div class="ws-stat ${r.failed ? "fail" : ""}"><div class="ws-stat-label">Palo</div><div class="ws-stat-value" style="color:${r.failed ? "#fb7185" : "var(--text)"}">✕ ${r.failed}</div></div>
+      <div class="ws-stat"><div class="ws-stat-label">Trajanje</div><div class="ws-stat-value" style="font-size:24px">${escapeHtml(auDur(r.duration_ms))}</div></div>
+    </section>
+    <div class="au-layout">
+      <section class="au-tests bg-list" aria-label="Testovi">${rows || `<div class="ws-empty" style="margin:16px">Nema testova.</div>`}</section>
+      <section class="au-hist" aria-labelledby="auHistTitle"><h2 id="auHistTitle">Historija pokretanja</h2>
+        ${auRuns.map(x => `<button type="button" class="au-hist-row ${x.id === r.id ? "active" : ""}" data-id="${x.id}">
+          <span class="au-hist-dot" style="background:${x.failed ? "var(--red)" : "var(--green)"}"></span>
+          <b style="min-width:40px">#${x.id}</b>
+          <span style="flex:1;color:var(--muted)">${escapeHtml(wsFmt(x.started_at))}</span>
+          <span>${x.passed} ✓${x.failed ? ` · <span style="color:#fb7185">${x.failed} ✕</span>` : ""}</span>
+        </button>`).join("")}
+      </section>
+    </div>`;
+  body.querySelectorAll(".au-hist-row").forEach(b => b.addEventListener("click", () => openAutomationRun(b.dataset.id)));
+  body.querySelectorAll(".au-shot").forEach(b => b.addEventListener("click", () => {
+    const t = d.results[+b.dataset.i];
+    const lb = document.createElement("div");
+    lb.className = "pl-lightbox";
+    lb.innerHTML = `<img src="${escapeHtml(t.screenshot)}" alt="" /><div>${escapeHtml(t.test_code + " · " + t.title)}</div>`;
+    lb.addEventListener("click", () => lb.remove());
+    document.body.appendChild(lb);
+  }));
+}
+document.getElementById("auDeleteBtn").addEventListener("click", async () => {
+  if (!auCurrent || !confirm(`Obrisati pokretanje #${auCurrent.id}? Ovo se ne može vratiti.`)) return;
+  try { await api(`/api/automation/runs/${auCurrent.id}`, { method: "DELETE" }); showAutomationView(); }
+  catch (e) { alert(e.message); }
+});
 
 // ===== Nova regresija + Historija =====
 function wsSuiteName(suite) { return suite ? (PL_SUITES[suite] ? PL_SUITES[suite].name : suite) : "Svi suiteovi"; }
@@ -1745,6 +1926,7 @@ async function showHistoryView(runId) {
   document.querySelectorAll("#mainContent > div").forEach(d => d.classList.add("hidden"));
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("historyView").classList.remove("hidden");
+  window.scrollTo(0, 0);
   renderSideNav("history");
   if (runId) return openHistoryRun(runId);
   document.getElementById("histDetailWrap").classList.add("hidden");
@@ -1829,8 +2011,8 @@ async function showHome() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("homeView").classList.remove("hidden");
   renderSideNav("home");
@@ -2046,8 +2228,8 @@ async function openRelease(release) {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("releaseView").classList.remove("hidden");
   document.getElementById("statusFilter").value = "";
@@ -2305,8 +2487,8 @@ async function openFeatureDetail(id) {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("featureDetailView").classList.remove("hidden");
   renderFeatureDetail();
@@ -2591,8 +2773,8 @@ async function openTestPlanBuilder(id) {
   document.getElementById("homeView").classList.add("hidden");
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
@@ -2607,8 +2789,8 @@ function openTestSuitesView() {
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
   document.getElementById("testPlanBuilderView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("testSuitesView").classList.remove("hidden");
@@ -2658,8 +2840,8 @@ function openPlayerView(suite) {
   document.getElementById("featureDetailView").classList.add("hidden");
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("playerView").classList.remove("hidden");
   // Browser zna autofillati username u polje za pretragu - očisti ga pri svakom otvaranju
@@ -2801,7 +2983,7 @@ function openSettingsPage() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("settingsView").classList.remove("hidden");
   document.getElementById("setCpUsername").value = currentUser ? currentUser.username : "";
   document.getElementById("setCpCurrent").value = "";
@@ -2819,8 +3001,8 @@ function openReportingPage() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden"); document.getElementById("automationView").classList.add("hidden");
   document.getElementById("reportingView").classList.remove("hidden");
   loadReportingSprint();
 }
