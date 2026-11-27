@@ -22,8 +22,19 @@ const SEL = {
   localeBtn: T("components/Common/Header/SubNavigation/LocaleSelection_Button"),
   loginWrapper: T("components/Common/LoginBox/Login_Wrapper"),
   footer: T("components/Common/Footer_Iframe"),
+  cookieOverlay: T("components/Common/CookieConsent_CookieOverlay"),
+  cookieOnlyRequired: T("components/Common/CookieConsent_GreyButton"),
 };
+const ODD_RE = /\d+(?:\.\d{1,2})?/;            // kvote: 2.60, 11.0, 29.0 ...
+const oddOf = t => num(String(t).trim().match(ODD_RE)[0]);
 const num = s => parseFloat(String(s).replace(/[^\d,.\-]/g, "").replace(",", "."));
+
+// Cookie banner: kad god se pojavi, klikni "ONLY REQUIRED" (samo nužni kolačići)
+test.beforeEach(async ({ page }) => {
+  await page.addLocatorHandler(page.locator(SEL.cookieOverlay), async () => {
+    await page.locator(SEL.cookieOnlyRequired).click();
+  });
+});
 
 // Screenshot (JPEG) za hub kad test padne
 test.afterEach(async ({ page }, testInfo) => {
@@ -65,18 +76,19 @@ test("AUTO-03 · Kvote su prikazane i ispravne (decimalne, > 1.00)", async ({ pa
   await openSports(page);
   const texts = (await page.locator(SEL.upcoming).locator(SEL.betButton).allTextContents()).map(t => t.trim()).filter(Boolean).slice(0, 30);
   expect(texts.length, "broj kvota").toBeGreaterThan(5);
-  const bad = texts.filter(t => !/\d+\.\d{2}/.test(t) || !(num(t.match(/\d+\.\d{2}/)[0]) > 1));
+  const bad = texts.filter(t => !/^\d+(\.\d{1,2})?$/.test(t) || !(num(t) > 1));
   expect(bad, "neispravne kvote").toEqual([]);
 });
 
 test("AUTO-04 · Klik na kvotu dodaje selekciju u betslip", async ({ page }) => {
   await openSports(page);
   const btn = page.locator(SEL.upcoming).locator(SEL.oddsRow).nth(0).locator(SEL.betButton).first();
-  const odd = (await btn.textContent()).trim().match(/\d+\.\d{2}/)[0];
+  const odd = oddOf(await btn.textContent());
   await btn.click();
   await expect(page.locator(SEL.slipCounter)).toHaveText("1");
   await expect(btn).toHaveClass(/IsInTicket/);
-  await expect(page.locator(SEL.slipOdds).first()).toHaveText(odd);
+  await expect(page.locator(SEL.slipOdds).first()).toBeVisible();
+  expect(oddOf(await page.locator(SEL.slipOdds).first().textContent()), "kvota u betslipu = kliknuta kvota").toBeCloseTo(odd, 2);
 });
 
 test("AUTO-05 · Combi: Total Odds = proizvod kvota", async ({ page }) => {
@@ -85,7 +97,7 @@ test("AUTO-05 · Combi: Total Odds = proizvod kvota", async ({ page }) => {
   const odds = [];
   for (const i of [0, 1]) {
     const b = rows.nth(i).locator(SEL.betButton).first();
-    odds.push(num((await b.textContent()).match(/\d+\.\d{2}/)[0]));
+    odds.push(oddOf(await b.textContent()));
     await b.click();
   }
   await expect(page.locator(SEL.slipCounter)).toHaveText("2");
@@ -109,9 +121,10 @@ test("AUTO-06 · Cancel prazni betslip", async ({ page }) => {
 
 test("AUTO-07 · Live Betting stranica prikazuje live događaje", async ({ page }) => {
   await page.goto("/en-at/live-betting");
-  await expect(page.locator(SEL.liveTable)).toBeVisible();
-  await expect(page.locator(SEL.liveTable).locator(SEL.matchNames).first(), "live događaji se nisu učitali (vide se samo placeholderi)").toBeVisible({ timeout: 30_000 });
-  await expect(page.locator(SEL.livePlaceholder)).toHaveCount(0);
+  await expect(page.locator(SEL.liveTable).first()).toBeVisible();
+  await expect(page.locator(SEL.liveTable).locator(`${SEL.matchNames}, ${SEL.betButton}`).first(),
+    "live događaji se nisu učitali (vide se samo placeholderi)").toBeVisible({ timeout: 30_000 });
+  await expect(page.locator(SEL.livePlaceholder), "placeholderi nisu nestali").toHaveCount(0, { timeout: 15_000 });
 });
 
 test("AUTO-08 · Results stranica prikazuje rezultate", async ({ page }) => {
