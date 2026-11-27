@@ -1673,7 +1673,7 @@ function regUpdatePreview() {
   let total = 0, done = 0, failed = 0;
   wsProgress.forEach(r => { if (!suite || r.suite === suite) { total += Number(r.total) || 0; done += Number(r.done) || 0; failed += Number(r.failed) || 0; } });
   document.getElementById("regPreview").innerHTML = done
-    ? `Sačuvat će se <b>${done}</b> od ${total} TC-ova (<span style="color:var(--green)">✓ ${done - failed}</span> · <span style="color:#fb7185">✕ ${failed}</span> · netestirano ${total - done}), a zatim se oznake za <b>${escapeHtml(wsSuiteName(suite))}</b> brišu.`
+    ? `U historiju se sprema stanje svih <b>${total}</b> TC-ova (<b>${escapeHtml(wsSuiteName(suite))}</b>): <span style="color:var(--green)">✓ ${done - failed} prošlo</span> · <span style="color:#fb7185">✕ ${failed} palo</span> · ${total - done} netestirano.<br>Nakon toga se sve oznake ✓ / ✕ brišu i TC-ovi su ponovo netestirani za novu regresiju.`
     : `Za <b>${escapeHtml(wsSuiteName(suite))}</b> nema označenih TC-ova – nema šta sačuvati.`;
   document.getElementById("regConfirm").disabled = !done;
 }
