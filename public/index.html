@@ -560,6 +560,10 @@
   .ws-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: #8fa2ff; }
   .ws-head h1 { margin: 6px 0 0; font-size: 32px; font-weight: 800; }
   .ws-head p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+  .ws-head h1.ws-title { margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ws-env { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 99px; background: var(--green-soft);
+    border: 1px solid rgba(34,197,94,0.35); color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .3px; }
+  .ws-env-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
   .ws-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 36px; }
   .ws-stat { padding: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
   .ws-stat.fail { border-color: rgba(244,63,94,0.45); }
@@ -710,9 +714,7 @@
     <div id="homeView">
       <div class="ws-head">
         <div>
-          <div class="ws-eyebrow">MEDIASTREAM · SAFEBET</div>
-          <h1>Workspace</h1>
-          <p>Stanje testiranja za trenutnu regresiju – staging-2</p>
+          <h1 class="ws-title">Stanje testiranja – trenutna regresija <span class="ws-env"><span class="ws-env-dot"></span>staging-2</span></h1>
         </div>
         <div class="ws-head-actions">
           <button type="button" class="ws-btn" id="wsHistoryBtn">Historija</button>
@@ -1404,7 +1406,7 @@
   <div class="modal">
     <h3 id="newRegTitle" style="margin-top:0">Nova regresija</h3>
     <p class="modal-sub">Trenutni rezultati se čuvaju u Historiju regresije, a zatim se sve oznake ✓ / ✕ brišu da možeš početi ispočetka.</p>
-    <div class="field"><label for="regName">Naziv</label><input id="regName" maxlength="120" /></div>
+    <div class="field"><label for="regName">Naziv regresije koja se sprema (ovo testiranje)</label><input id="regName" maxlength="120" /></div>
     <div class="field"><label for="regSuite">Šta se sprema</label><select id="regSuite"><option value="">Svi suiteovi</option></select></div>
     <div class="reg-preview" id="regPreview"></div>
     <div class="error-msg" id="regError"></div>
