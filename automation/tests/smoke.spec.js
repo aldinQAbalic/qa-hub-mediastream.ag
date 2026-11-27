@@ -25,7 +25,7 @@ const SEL = {
   loginWrapper: T("components/Common/LoginBox/Login_Wrapper"),
   footer: T("components/Common/Footer_Iframe"),
   mainNavItem: T("components/Common/Header/MainNavigation_Links") + " a",
-  helpMenu: T("components/Help/Navigation/Menu"),
+  helpMenu: T("components/Help/Navigation_AsideLeftWrapper"),   // ("Navigation/Menu" je na svakoj ikoni i tekstu u meniju)
   helpOption: T("components/Help/Navigation/Menu_Option"),
   helpIframe: T("components/Help_Help"),
   helpWrapper: T("components/Help_Wrapper"),
@@ -352,7 +352,8 @@ test("AUTO-25 · Registracija: prazna forma pokazuje greške i ne šalje se", as
 
 test("AUTO-26 · Login s nepostojećim korisnikom prikazuje grešku", async ({ page }) => {
   await openSports(page);
-  allowConsole(page, /Failed to load resource: the server responded with a status of 4\d\d/i);  // pogrešan login = očekivani 4xx
+  // pogrešan login = očekivani 4xx i poruka aplikacije [AUTH213] u konzoli
+  allowConsole(page, /Failed to load resource: the server responded with a status of 4\d\d/i, /AUTH213/);
   await page.locator(SEL.loginBtn).click();
   const box = page.locator(SEL.loginWrapper);
   await expect(box).toBeVisible();
