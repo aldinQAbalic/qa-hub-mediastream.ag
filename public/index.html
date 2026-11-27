@@ -626,6 +626,30 @@
   .bg-links a { padding: 3px 8px; border-radius: 6px; background: var(--red-soft); color: #fb7185; font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; }
   .bg-links a:hover { background: rgba(244,63,94,0.28); }
   .bg-count { font-size: 13px; color: var(--muted); margin-left: auto; }
+  /* Historija regresija */
+  .ws-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .ws-btn { height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .ws-btn:hover { border-color: var(--blue); }
+  .ws-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 700; }
+  .ws-btn.primary:hover { filter: brightness(1.1); }
+  .ws-btn.danger { color: #fb7185; border-color: rgba(244,63,94,0.45); background: transparent; }
+  .ws-btn:disabled { opacity: .55; cursor: default; }
+  .field select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit; font-size: 14px; }
+  .reg-preview { padding: 12px 14px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--border); font-size: 13px; color: #c9d1de; line-height: 1.5; margin-bottom: 4px; }
+  .hist-list { display: flex; flex-direction: column; gap: 12px; }
+  .hist-card { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    color: var(--text); font: inherit; text-align: left; cursor: pointer; width: 100%; }
+  .hist-card:hover { border-color: var(--blue); }
+  .hist-card-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .hist-name { font-weight: 700; font-size: 16px; flex: 1; min-width: 200px; }
+  .hist-meta { font-size: 12px; color: var(--muted); }
+  .hist-res { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .hist-res .p { color: var(--green); } .hist-res .f { color: #fb7185; } .hist-res .n { color: var(--muted); }
+  .hist-suites { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .hist-suite { padding: 10px 14px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); font-size: 13px; }
+  .hist-suite b { display: block; margin-bottom: 2px; }
+  .hist-back { background: transparent; border: 0; color: #8fa2ff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 14px; }
   /* Breadcrumb i "Back to Workspace" nisu potrebni – navigacija je u bočnom meniju */
   .breadcrumb, .back-link { display: none !important; }
   @media (max-width: 900px) {
@@ -689,6 +713,10 @@
           <div class="ws-eyebrow">MEDIASTREAM · SAFEBET</div>
           <h1>Workspace</h1>
           <p>Stanje testiranja za trenutnu regresiju – staging-2</p>
+        </div>
+        <div class="ws-head-actions">
+          <button type="button" class="ws-btn" id="wsHistoryBtn">Historija</button>
+          <button type="button" class="ws-btn primary" id="wsNewRegBtn">+ Nova regresija</button>
         </div>
       </div>
       <section class="ws-overview" id="wsOverview" aria-label="Pregled"></section>
@@ -1054,6 +1082,43 @@
     </div><!-- /testSuitesView -->
 
     <!-- ===== PLAYER ===== -->
+    <!-- ===== HISTORIJA REGRESIJA ===== -->
+    <div id="historyView" class="hidden">
+      <div id="histListWrap">
+        <div class="ws-head">
+          <div>
+            <div class="ws-eyebrow">PREGLED</div>
+            <h1>Historija regresije</h1>
+            <p>Svaka regresija čuva rezultate (✓ / ✕ / netestirano) u trenutku kad je kliknuto "Nova regresija".</p>
+          </div>
+        </div>
+        <div class="hist-list" id="histList"></div>
+      </div>
+      <div id="histDetailWrap" class="hidden">
+        <button type="button" class="hist-back" id="histBackBtn">← Sve regresije</button>
+        <div class="ws-head">
+          <div>
+            <div class="ws-eyebrow">REGRESIJA</div>
+            <h1 id="histTitle"></h1>
+            <p id="histMeta"></p>
+          </div>
+          <div class="ws-head-actions"><button type="button" class="ws-btn danger hidden" id="histDeleteBtn">Obriši regresiju</button></div>
+        </div>
+        <section class="ws-overview" id="histOverview" aria-label="Sažetak regresije"></section>
+        <div class="hist-suites" id="histSuites"></div>
+        <div class="bg-toolbar">
+          <button type="button" class="bg-chip active" data-hf="all">Svi</button>
+          <button type="button" class="bg-chip" data-hf="fail">Palo ✕</button>
+          <button type="button" class="bg-chip" data-hf="pass">Prošlo ✓</button>
+          <button type="button" class="bg-chip" data-hf="none">Netestirano</button>
+          <label style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)" for="histSuiteSel">Suite</label>
+          <select id="histSuiteSel"><option value="">Svi suiteovi</option></select>
+          <span class="bg-count" id="histCount"></span>
+        </div>
+        <div class="bg-list" id="histResults"></div>
+      </div>
+    </div>
+
     <!-- ===== BUGOVI: svi pali TC-ovi i TC-ovi s Jira bugom ===== -->
     <div id="bugsView" class="hidden">
       <div class="ws-head">
@@ -1335,6 +1400,21 @@
 </div>
 
 <!-- New release modal -->
+<div id="newRegModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="newRegTitle">
+  <div class="modal">
+    <h3 id="newRegTitle" style="margin-top:0">Nova regresija</h3>
+    <p class="modal-sub">Trenutni rezultati se čuvaju u Historiju regresije, a zatim se sve oznake ✓ / ✕ brišu da možeš početi ispočetka.</p>
+    <div class="field"><label for="regName">Naziv</label><input id="regName" maxlength="120" /></div>
+    <div class="field"><label for="regSuite">Šta se sprema</label><select id="regSuite"><option value="">Svi suiteovi</option></select></div>
+    <div class="reg-preview" id="regPreview"></div>
+    <div class="error-msg" id="regError"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="regCancel">Odustani</button>
+      <button class="btn btn-primary" style="width:auto;" id="regConfirm">Sačuvaj i počni novu</button>
+    </div>
+  </div>
+</div>
+
 <div id="newReleaseModal" class="modal-backdrop hidden">
   <div class="modal">
     <h3>Novi release</h3>
@@ -1444,11 +1524,11 @@ function renderSideNav(active) {
   });
   html += `<div class="sn-label">AUTOMATIZACIJA</div>` + soon("automation", "Automation");
   const failedAll = wsProgress.reduce((n, r) => n + (Number(r.failed) || 0), 0);
-  html += `<div class="sn-label">PREGLED</div>` + item("bugs", "Bugovi", failedAll ? `<span class="sn-count fail">✕ ${failedAll}</span>` : "") + soon("history", "Historija regresije");
+  html += `<div class="sn-label">PREGLED</div>` + item("bugs", "Bugovi", failedAll ? `<span class="sn-count fail">✕ ${failedAll}</span>` : "") + item("history", "Historija regresije");
   nav.innerHTML = html;
   nav.querySelectorAll("[data-nav]").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.nav;
-    if (k === "home") showHome(); else if (k === "bugs") showBugsView(); else openPlayerView(k);
+    if (k === "home") showHome(); else if (k === "bugs") showBugsView(); else if (k === "history") showHistoryView(); else openPlayerView(k);
   }));
 }
 
@@ -1586,14 +1666,148 @@ document.querySelectorAll("#bugsView [data-bgf]").forEach(b => b.addEventListene
 document.getElementById("bgSuite").addEventListener("change", renderBugs);
 document.getElementById("wsAllBugsBtn").addEventListener("click", showBugsView);
 
+// ===== Nova regresija + Historija =====
+function wsSuiteName(suite) { return suite ? (PL_SUITES[suite] ? PL_SUITES[suite].name : suite) : "Svi suiteovi"; }
+function regUpdatePreview() {
+  const suite = document.getElementById("regSuite").value;
+  let total = 0, done = 0, failed = 0;
+  wsProgress.forEach(r => { if (!suite || r.suite === suite) { total += Number(r.total) || 0; done += Number(r.done) || 0; failed += Number(r.failed) || 0; } });
+  document.getElementById("regPreview").innerHTML = done
+    ? `Sačuvat će se <b>${done}</b> od ${total} TC-ova (<span style="color:var(--green)">✓ ${done - failed}</span> · <span style="color:#fb7185">✕ ${failed}</span> · netestirano ${total - done}), a zatim se oznake za <b>${escapeHtml(wsSuiteName(suite))}</b> brišu.`
+    : `Za <b>${escapeHtml(wsSuiteName(suite))}</b> nema označenih TC-ova – nema šta sačuvati.`;
+  document.getElementById("regConfirm").disabled = !done;
+}
+function openNewRegModal() {
+  const sel = document.getElementById("regSuite");
+  if (sel.options.length === 1) WS_SUITES.forEach(({ suite }) => sel.add(new Option(wsSuiteName(suite), suite)));
+  sel.value = "";
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  document.getElementById("regName").value = `Regresija ${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
+  document.getElementById("regError").textContent = "";
+  regUpdatePreview();
+  document.getElementById("newRegModal").classList.remove("hidden");
+  document.getElementById("regName").focus();
+}
+function closeNewRegModal() { document.getElementById("newRegModal").classList.add("hidden"); }
+document.getElementById("wsNewRegBtn").addEventListener("click", openNewRegModal);
+document.getElementById("wsHistoryBtn").addEventListener("click", () => showHistoryView());
+document.getElementById("regSuite").addEventListener("change", regUpdatePreview);
+document.getElementById("regCancel").addEventListener("click", closeNewRegModal);
+document.getElementById("newRegModal").addEventListener("keydown", e => { if (e.key === "Escape") closeNewRegModal(); });
+document.getElementById("regConfirm").addEventListener("click", async () => {
+  const btn = document.getElementById("regConfirm");
+  const name = document.getElementById("regName").value.trim();
+  if (!name) { document.getElementById("regError").textContent = "Upiši naziv regresije"; return; }
+  btn.disabled = true;
+  try {
+    const r = await api("/api/regressions", { method: "POST", body: JSON.stringify({ name, suite: document.getElementById("regSuite").value }) });
+    closeNewRegModal();
+    await loadPlayerSuiteProgress();
+    showHistoryView(r.id);
+  } catch (e) {
+    document.getElementById("regError").textContent = e.message;
+    btn.disabled = false;
+  }
+});
+
+let histRun = null, histRows = [], histFilter = "all";
+function histBar(total, done, failed) {
+  const pw = total ? (done - failed) / total * 100 : 0, fw = total ? failed / total * 100 : 0;
+  return `<div class="ws-bar" role="img" aria-label="${done - failed} prošlo, ${failed} palo, ${total - done} netestirano"><div class="p" style="width:${pw}%"></div><div class="f" style="width:${fw}%"></div></div>`;
+}
+function histRes(total, done, failed) {
+  return `<span class="hist-res"><span class="p">✓ ${done - failed}</span> · <span class="f">✕ ${failed}</span> · <span class="n">netestirano ${total - done}</span></span>`;
+}
+async function showHistoryView(runId) {
+  document.querySelectorAll("#mainContent > div").forEach(d => d.classList.add("hidden"));
+  document.getElementById("mainContent").classList.remove("hidden");
+  document.getElementById("historyView").classList.remove("hidden");
+  renderSideNav("history");
+  if (runId) return openHistoryRun(runId);
+  document.getElementById("histDetailWrap").classList.add("hidden");
+  document.getElementById("histListWrap").classList.remove("hidden");
+  const list = document.getElementById("histList");
+  list.innerHTML = `<div class="ws-empty">Učitavam…</div>`;
+  let runs;
+  try { runs = await api("/api/regressions"); }
+  catch (e) { list.innerHTML = `<div class="ws-empty">Ne mogu učitati historiju: ${escapeHtml(e.message)}. Ako je ovo prvo pokretanje, pokreni migration-regression-runs.sql.</div>`; return; }
+  if (!runs.length) { list.innerHTML = `<div class="ws-empty">Još nema sačuvanih regresija. Na Workspaceu klikni "+ Nova regresija" kad završiš testiranje.</div>`; return; }
+  list.innerHTML = runs.map(r => `<button type="button" class="hist-card" data-id="${r.id}">
+      <div class="hist-card-top">
+        <span class="hist-name">${escapeHtml(r.name)}</span>
+        ${histRes(r.total, r.done, r.failed)}
+      </div>
+      ${histBar(r.total, r.done, r.failed)}
+      <div class="hist-meta">${escapeHtml(wsSuiteName(r.suite))} · ${r.done} / ${r.total} testirano · ${escapeHtml(String(r.created_by || "").split(" ")[0])} · ${escapeHtml(wsFmt(r.created_at))}</div>
+    </button>`).join("");
+  list.querySelectorAll(".hist-card").forEach(b => b.addEventListener("click", () => openHistoryRun(b.dataset.id)));
+}
+async function openHistoryRun(id) {
+  document.getElementById("histListWrap").classList.add("hidden");
+  document.getElementById("histDetailWrap").classList.remove("hidden");
+  document.getElementById("histResults").innerHTML = `<div class="ws-empty" style="margin:16px">Učitavam…</div>`;
+  let data;
+  try { data = await api(`/api/regressions/${id}`); }
+  catch (e) { document.getElementById("histResults").innerHTML = `<div class="ws-empty" style="margin:16px">${escapeHtml(e.message)}</div>`; return; }
+  histRun = data.run; histRows = data.results; histFilter = "all";
+  document.querySelectorAll("#historyView [data-hf]").forEach(x => x.classList.toggle("active", x.dataset.hf === "all"));
+  const r = histRun;
+  document.getElementById("histTitle").textContent = r.name;
+  document.getElementById("histMeta").textContent = `${wsSuiteName(r.suite)} · sačuvao ${r.created_by || "—"} · ${wsFmt(r.created_at)}`;
+  document.getElementById("histDeleteBtn").classList.toggle("hidden", !(currentUser && currentUser.username === "aldin"));
+  const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
+  document.getElementById("histOverview").innerHTML = `
+    <div class="ws-stat"><div class="ws-stat-label">Ukupno TC</div><div class="ws-stat-value">${r.total}</div></div>
+    <div class="ws-stat"><div class="ws-stat-label">Testirano</div><div class="ws-stat-value">${r.done} <small>${pct}%</small></div><div class="ws-stat-bar"><div style="width:${pct}%"></div></div></div>
+    <div class="ws-stat"><div class="ws-stat-label">Prošlo</div><div class="ws-stat-value" style="color:var(--green)">✓ ${r.done - r.failed}</div></div>
+    <div class="ws-stat ${r.failed ? "fail" : ""}"><div class="ws-stat-label">Palo</div><div class="ws-stat-value" style="color:${r.failed ? "#fb7185" : "var(--text)"}">✕ ${r.failed}</div></div>`;
+  let summary = [];
+  try { summary = JSON.parse(r.summary || "[]"); } catch (e) {}
+  document.getElementById("histSuites").innerHTML = summary.map(x =>
+    `<div class="hist-suite"><b>${escapeHtml(wsSuiteName(x.suite))}</b>${histRes(Number(x.total) || 0, Number(x.done) || 0, Number(x.failed) || 0)}</div>`).join("");
+  const sel = document.getElementById("histSuiteSel");
+  sel.innerHTML = `<option value="">Svi suiteovi</option>` + summary.map(x => `<option value="${escapeHtml(x.suite)}">${escapeHtml(wsSuiteName(x.suite))}</option>`).join("");
+  renderHistoryRows();
+}
+function renderHistoryRows() {
+  const suite = document.getElementById("histSuiteSel").value;
+  const rows = histRows.filter(t => (!suite || t.suite === suite) && (histFilter === "all" || t.result === histFilter));
+  document.getElementById("histCount").textContent = `${rows.length} ${rows.length === 1 ? "TC" : "TC-ova"}`;
+  const list = document.getElementById("histResults");
+  if (!rows.length) { list.innerHTML = `<div class="ws-empty" style="margin:16px">Nema TC-ova za ovaj filter.</div>`; return; }
+  list.innerHTML = rows.map(t => {
+    const st = t.result === "fail" ? `<span class="bg-status fail">✕ Palo</span>` : (t.result === "pass" ? `<span class="bg-status pass">✓ Prošlo</span>` : `<span class="bg-status none">Netestirano</span>`);
+    const links = plBugList(t.bug_links).map(b => `<a href="${escapeHtml(b.url)}" target="_blank" rel="noopener">${escapeHtml(b.key)} ↗</a>`).join("");
+    const who = t.done_at ? ` · ${escapeHtml(String(t.done_by || "").split(" ")[0])} · ${escapeHtml(wsFmt(t.done_at))}` : "";
+    return `<div class="bg-row" style="cursor:default">
+      ${st}
+      <span class="ws-fail-code">${escapeHtml(t.tc_code || "#" + t.tc_id)}</span>
+      <div class="bg-main"><div class="bg-title">${escapeHtml(t.title)}</div><div class="bg-meta">${escapeHtml(wsSuiteName(t.suite))} · ${escapeHtml(t.module)}${who}</div></div>
+      <div class="bg-links">${links}</div>
+    </div>`;
+  }).join("");
+}
+document.querySelectorAll("#historyView [data-hf]").forEach(b => b.addEventListener("click", () => {
+  histFilter = b.dataset.hf;
+  document.querySelectorAll("#historyView [data-hf]").forEach(x => x.classList.toggle("active", x === b));
+  renderHistoryRows();
+}));
+document.getElementById("histSuiteSel").addEventListener("change", renderHistoryRows);
+document.getElementById("histBackBtn").addEventListener("click", () => showHistoryView());
+document.getElementById("histDeleteBtn").addEventListener("click", async () => {
+  if (!histRun || !confirm(`Obrisati regresiju "${histRun.name}"? Ovo se ne može vratiti.`)) return;
+  try { await api(`/api/regressions/${histRun.id}`, { method: "DELETE" }); showHistoryView(); }
+  catch (e) { alert(e.message); }
+});
+
 async function showHome() {
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("homeView").classList.remove("hidden");
   renderSideNav("home");
@@ -1809,8 +2023,8 @@ async function openRelease(release) {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("releaseView").classList.remove("hidden");
   document.getElementById("statusFilter").value = "";
@@ -2068,8 +2282,8 @@ async function openFeatureDetail(id) {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("featureDetailView").classList.remove("hidden");
   renderFeatureDetail();
@@ -2354,8 +2568,8 @@ async function openTestPlanBuilder(id) {
   document.getElementById("homeView").classList.add("hidden");
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
@@ -2370,8 +2584,8 @@ function openTestSuitesView() {
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
   document.getElementById("testPlanBuilderView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("testSuitesView").classList.remove("hidden");
@@ -2421,8 +2635,8 @@ function openPlayerView(suite) {
   document.getElementById("featureDetailView").classList.add("hidden");
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("playerView").classList.remove("hidden");
   // Browser zna autofillati username u polje za pretragu - očisti ga pri svakom otvaranju
@@ -2564,7 +2778,7 @@ function openSettingsPage() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("settingsView").classList.remove("hidden");
   document.getElementById("setCpUsername").value = currentUser ? currentUser.username : "";
   document.getElementById("setCpCurrent").value = "";
@@ -2582,8 +2796,8 @@ function openReportingPage() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden"); document.getElementById("historyView").classList.add("hidden");
   document.getElementById("reportingView").classList.remove("hidden");
   loadReportingSprint();
 }

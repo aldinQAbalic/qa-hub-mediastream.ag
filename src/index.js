@@ -426,6 +426,67 @@ export default {
           }
           return json(results);
         }
+        // ===== Historija regresija =====
+        // POST: sačuvaj trenutne oznake (za sve suiteove ili jedan) kao jednu regresiju, pa očisti oznake
+        if (pathname === "/api/regressions" && request.method === "POST") {
+          const body = await request.json().catch(() => ({}));
+          const name = String(body.name || "").trim().slice(0, 120);
+          if (!name) return json({ error: "Upiši naziv regresije" }, 400);
+          const suite = body.suite ? String(body.suite) : "";
+          if (suite && !/^[a-z0-9-]{1,30}$/.test(suite)) return json({ error: "Neispravan suite" }, 400);
+          const cnt = await env.DB.prepare(
+            `SELECT COUNT(*) AS total, SUM(CASE WHEN done_at IS NOT NULL THEN 1 ELSE 0 END) AS done,
+                    SUM(CASE WHEN done_at IS NOT NULL AND done_result = 'fail' THEN 1 ELSE 0 END) AS failed
+             FROM player_test_cases WHERE (?1 = '' OR suite = ?1)`
+          ).bind(suite).first();
+          if (!cnt || !Number(cnt.done)) return json({ error: "Nema označenih TC-ova – nema šta sačuvati" }, 400);
+          const { results: summary } = await env.DB.prepare(
+            `SELECT suite, COUNT(*) AS total, SUM(CASE WHEN done_at IS NOT NULL THEN 1 ELSE 0 END) AS done,
+                    SUM(CASE WHEN done_at IS NOT NULL AND done_result = 'fail' THEN 1 ELSE 0 END) AS failed
+             FROM player_test_cases WHERE (?1 = '' OR suite = ?1) GROUP BY suite`
+          ).bind(suite).all();
+          const run = await env.DB.prepare(
+            `INSERT INTO regression_runs (name, suite, created_by, total, done, failed, summary) VALUES (?, ?, ?, ?, ?, ?, ?)`
+          ).bind(name, suite, user.display_name, Number(cnt.total) || 0, Number(cnt.done) || 0, Number(cnt.failed) || 0, JSON.stringify(summary)).run();
+          const runId = run.meta.last_row_id;
+          await env.DB.batch([
+            env.DB.prepare(
+              `INSERT INTO regression_results (run_id, tc_id, suite, module, tc_code, title, result, done_by, done_at, bug_links)
+               SELECT ?1, id, suite, module, tc_code, title,
+                      CASE WHEN done_at IS NULL THEN 'none' WHEN done_result = 'fail' THEN 'fail' ELSE 'pass' END,
+                      COALESCE(done_by, ''), done_at, COALESCE(bug_links, '')
+               FROM player_test_cases WHERE (?2 = '' OR suite = ?2)`
+            ).bind(runId, suite),
+            env.DB.prepare(
+              `UPDATE player_test_cases SET done_at = NULL, done_by = '', done_result = 'pass' WHERE (?1 = '' OR suite = ?1)`
+            ).bind(suite),
+          ]);
+          return json({ id: runId });
+        }
+        if (pathname === "/api/regressions" && request.method === "GET") {
+          const { results } = await env.DB.prepare(
+            `SELECT id, name, suite, created_by, created_at, total, done, failed, summary FROM regression_runs ORDER BY id DESC LIMIT 200`
+          ).all();
+          return json(results);
+        }
+        const regMatch = pathname.match(/^\/api\/regressions\/(\d+)$/);
+        if (regMatch && request.method === "GET") {
+          const run = await env.DB.prepare(`SELECT * FROM regression_runs WHERE id = ?`).bind(regMatch[1]).first();
+          if (!run) return json({ error: "Regresija nije pronađena" }, 404);
+          const { results } = await env.DB.prepare(
+            `SELECT tc_id, suite, module, tc_code, title, result, done_by, done_at, bug_links
+             FROM regression_results WHERE run_id = ? ORDER BY suite, module, tc_code, id`
+          ).bind(regMatch[1]).all();
+          return json({ run, results });
+        }
+        if (regMatch && request.method === "DELETE") {
+          if (user.username !== "aldin") return json({ error: "Samo administrator (aldin) može brisati regresije" }, 403);
+          await env.DB.batch([
+            env.DB.prepare(`DELETE FROM regression_results WHERE run_id = ?`).bind(regMatch[1]),
+            env.DB.prepare(`DELETE FROM regression_runs WHERE id = ?`).bind(regMatch[1]),
+          ]);
+          return json({ ok: true });
+        }
         // Stranica Bugovi: svi pali TC-ovi i svi TC-ovi s Jira bugom, iz svih suiteova
         if (pathname === "/api/player-tcs/bugs" && request.method === "GET") {
           const { results } = await env.DB.prepare(
