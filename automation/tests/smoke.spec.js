@@ -45,6 +45,25 @@ test.afterEach(async ({ page }, testInfo) => {
   }
 });
 
+// Dodaje N selekcija iz različitih događaja: poslije svakog klika čeka da se brojač u betslipu poveća.
+// Ako klik ne doda selekciju (npr. isti događaj), proba sljedeći red – max 8 redova.
+async function addSelections(page, n) {
+  const rows = page.locator(SEL.upcoming).locator(SEL.oddsRow);
+  const counter = page.locator(SEL.slipCounter);
+  const odds = [];
+  for (let i = 0; i < 8 && odds.length < n; i++) {
+    const before = parseInt((await counter.textContent()) || "0", 10) || 0;
+    const btn = rows.nth(i).locator(`${SEL.betButton}:not([class*="IsInTicket"])`).first();
+    if (!(await btn.count())) continue;
+    const odd = oddOf(await btn.textContent());
+    await btn.click();
+    const added = await expect(counter).toHaveText(String(before + 1), { timeout: 5_000 }).then(() => true, () => false);
+    if (added) odds.push(odd);
+  }
+  expect(odds.length, `uspjelo dodati ${odds.length} od ${n} selekcija u betslip`).toBe(n);
+  return odds;
+}
+
 async function openSports(page) {
   await page.goto("/en-at/sports-betting");
   await expect(page.locator(SEL.logo)).toBeVisible();
@@ -94,13 +113,7 @@ test("AUTO-04 · Klik na kvotu dodaje selekciju u betslip", async ({ page }) => 
 
 test("AUTO-05 · Combi: Total Odds = proizvod kvota", async ({ page }) => {
   await openSports(page);
-  const rows = page.locator(SEL.upcoming).locator(SEL.oddsRow);
-  const odds = [];
-  for (const i of [0, 1]) {
-    const b = rows.nth(i).locator(SEL.betButton).first();
-    odds.push(oddOf(await b.textContent()));
-    await b.click();
-  }
+  const odds = await addSelections(page, 2);
   await expect(page.locator(SEL.slipCounter)).toHaveText("2");
   const totalText = await page.locator(SEL.slipTotalOdd).innerText();
   const total = num(totalText.split(/\n/).pop());
@@ -110,9 +123,7 @@ test("AUTO-05 · Combi: Total Odds = proizvod kvota", async ({ page }) => {
 
 test("AUTO-06 · Cancel prazni betslip", async ({ page }) => {
   await openSports(page);
-  const rows = page.locator(SEL.upcoming).locator(SEL.oddsRow);
-  await rows.nth(0).locator(SEL.betButton).first().click();
-  await rows.nth(1).locator(SEL.betButton).first().click();
+  await addSelections(page, 2);
   await expect(page.locator(SEL.slipCounter)).toHaveText("2");
   await page.locator(SEL.slipButton, { hasText: "Cancel" }).click();
   await expect(page.locator(SEL.slipCounter)).toHaveText("0");
@@ -139,7 +150,7 @@ test("AUTO-09 · Promjena jezika na Deutsch mijenja tekstove", async ({ page }) 
   const before = (await page.locator(SEL.mainLinks).innerText()).trim();
   await page.locator(SEL.localeBtn).click();
   await page.getByText("Deutsch", { exact: true }).click();
-  await expect(page).toHaveURL(/\/de-at\//);
+  await expect(page).toHaveURL(/\/de-(at|de)\//);   // staging prebacuje na /de-de/
   await expect(page.locator(SEL.mainLinks)).not.toHaveText(before);
   await expect(page.locator("html")).toHaveAttribute("lang", /de/);
 });
