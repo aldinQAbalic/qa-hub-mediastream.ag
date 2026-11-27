@@ -32,7 +32,8 @@ const num = s => parseFloat(String(s).replace(/[^\d,.\-]/g, "").replace(",", "."
 // Cookie banner: kad god se pojavi, klikni "ONLY REQUIRED" (samo nužni kolačići)
 test.beforeEach(async ({ page }) => {
   await page.addLocatorHandler(page.locator(SEL.cookieOverlay), async () => {
-    await page.locator(SEL.cookieOnlyRequired).click();
+    // Dva siva dugmeta imaju isti data-test ("LET ME CHOOSE" i "ONLY REQUIRED") – biramo po tekstu
+    await page.locator(SEL.cookieOverlay).getByRole("button", { name: /only required/i }).click();
   });
 });
 
