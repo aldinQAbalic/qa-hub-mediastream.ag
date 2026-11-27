@@ -426,6 +426,16 @@ export default {
           }
           return json(results);
         }
+        // Stranica Bugovi: svi pali TC-ovi i svi TC-ovi s Jira bugom, iz svih suiteova
+        if (pathname === "/api/player-tcs/bugs" && request.method === "GET") {
+          const { results } = await env.DB.prepare(
+            `SELECT id, suite, module, tc_code, title, priority, done_by, done_at, COALESCE(done_result, 'pass') AS done_result, bug_links
+             FROM player_test_cases
+             WHERE (done_at IS NOT NULL AND done_result = 'fail') OR (bug_links IS NOT NULL AND bug_links != '')
+             ORDER BY CASE WHEN done_at IS NOT NULL AND done_result = 'fail' THEN 0 ELSE 1 END, done_at DESC, suite, tc_code`
+          ).all();
+          return json(results);
+        }
         // Zadnji pali TC-ovi (crveni X) iz svih suiteova – za Workspace
         if (pathname === "/api/player-tcs/failed" && request.method === "GET") {
           const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "5", 10) || 5, 1), 50);
@@ -679,7 +689,7 @@ function playerSuite(s) {
 
 // Jira linkovi bugova: jedan po redu; samo http(s) linkovi ili Jira ključevi (npr. SPORTS-7637)
 function normBugLinks(v) {
-  return String(v || "").split(/[\r\n]+/).map(s => s.trim()).filter(Boolean)
+  return String(v || "").split(/[\r\n,;]+/).map(s => s.trim()).filter(Boolean)
     .filter(s => /^https?:\/\/\S+$/i.test(s) || /^[A-Z][A-Z0-9]+-\d+$/.test(s.toUpperCase()))
     .map(s => /^https?:/i.test(s) ? s : s.toUpperCase()).slice(0, 20).join("\n");
 }

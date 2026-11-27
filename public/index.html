@@ -605,6 +605,27 @@
   .ws-fail-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .ws-bug { padding: 3px 8px; border-radius: 6px; background: var(--red-soft); color: #fb7185; font-size: 11px; font-weight: 700; white-space: nowrap; }
   #homeView #bugSweepWrap, #homeView #dateTrackWrapReal { display: none !important; }
+  /* Stranica Bugovi */
+  .bg-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .bg-chip { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--border); background: transparent; color: #c9d1de; font: inherit; font-size: 13px; cursor: pointer; }
+  .bg-chip.active { border-color: var(--blue); background: var(--blue-soft); color: var(--text); font-weight: 600; }
+  .bg-toolbar select { height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font: inherit; font-size: 13px; }
+  .bg-list { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .bg-row { display: flex; gap: 14px; align-items: center; padding: 14px 20px; border-bottom: 1px solid #1b2336; cursor: pointer; }
+  .bg-row:last-child { border-bottom: 0; }
+  .bg-row:hover { background: rgba(255,255,255,0.03); }
+  .bg-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .bg-status { min-width: 92px; text-align: center; padding: 4px 8px; border-radius: 99px; font-size: 12px; font-weight: 700; }
+  .bg-status.fail { background: var(--red-soft); color: #fb7185; }
+  .bg-status.pass { background: var(--green-soft); color: var(--green); }
+  .bg-status.none { background: var(--gray-soft); color: var(--muted); }
+  .bg-main { flex: 1; min-width: 0; }
+  .bg-title { font-weight: 600; }
+  .bg-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .bg-links { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .bg-links a { padding: 3px 8px; border-radius: 6px; background: var(--red-soft); color: #fb7185; font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .bg-links a:hover { background: rgba(244,63,94,0.28); }
+  .bg-count { font-size: 13px; color: var(--muted); margin-left: auto; }
   /* Breadcrumb i "Back to Workspace" nisu potrebni – navigacija je u bočnom meniju */
   .breadcrumb, .back-link { display: none !important; }
   @media (max-width: 900px) {
@@ -687,7 +708,7 @@
           <div class="ws-empty">Još nema pokretanja. Automatski testovi su sljedeći korak – kad ih podesimo, ovdje će se vidjeti zadnje pokretanje, rezultat ✓ / ✕, trajanje i historija. Pokretanje: <code>npm run e2e</code></div>
         </section>
         <section class="ws-card narrow" aria-labelledby="wsFailTitle">
-          <div class="ws-section-head" style="margin:0"><h2 id="wsFailTitle">Zadnji pali TC-ovi</h2></div>
+          <div class="ws-section-head" style="margin:0"><h2 id="wsFailTitle">Zadnji pali TC-ovi</h2><button type="button" class="bg-chip" id="wsAllBugsBtn">Svi bugovi →</button></div>
           <div id="wsFailList"><div class="ws-empty">Učitavam…</div></div>
         </section>
       </div>
@@ -1033,6 +1054,26 @@
     </div><!-- /testSuitesView -->
 
     <!-- ===== PLAYER ===== -->
+    <!-- ===== BUGOVI: svi pali TC-ovi i TC-ovi s Jira bugom ===== -->
+    <div id="bugsView" class="hidden">
+      <div class="ws-head">
+        <div>
+          <div class="ws-eyebrow">PREGLED</div>
+          <h1>Bugovi</h1>
+          <p>Svi TC-ovi označeni crvenim ✕ i svi TC-ovi s povezanim Jira bugom, iz svih suiteova.</p>
+        </div>
+      </div>
+      <div class="bg-toolbar">
+        <button type="button" class="bg-chip active" data-bgf="all">Svi</button>
+        <button type="button" class="bg-chip" data-bgf="fail">Palo ✕</button>
+        <button type="button" class="bg-chip" data-bgf="bug">Sa Jira bugom</button>
+        <label style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)" for="bgSuite">Suite</label>
+        <select id="bgSuite"><option value="">Svi suiteovi</option></select>
+        <span class="bg-count" id="bgCount"></span>
+      </div>
+      <div class="bg-list" id="bgList"><div class="ws-empty" style="margin:16px">Učitavam…</div></div>
+    </div>
+
     <div id="playerView" class="hidden">
       <div class="breadcrumb">
         <b id="plCrumbWorkspace">Workspace</b> &nbsp;›&nbsp; <span id="plCrumbName">Player</span>
@@ -1402,11 +1443,12 @@ function renderSideNav(active) {
     html += item(suite, PL_SUITES[suite] ? PL_SUITES[suite].name : suite, extra);
   });
   html += `<div class="sn-label">AUTOMATIZACIJA</div>` + soon("automation", "Automation");
-  html += `<div class="sn-label">PREGLED</div>` + soon("bugs", "Bugovi") + soon("history", "Historija regresije");
+  const failedAll = wsProgress.reduce((n, r) => n + (Number(r.failed) || 0), 0);
+  html += `<div class="sn-label">PREGLED</div>` + item("bugs", "Bugovi", failedAll ? `<span class="sn-count fail">✕ ${failedAll}</span>` : "") + soon("history", "Historija regresije");
   nav.innerHTML = html;
   nav.querySelectorAll("[data-nav]").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.nav;
-    if (k === "home") showHome(); else openPlayerView(k);
+    if (k === "home") showHome(); else if (k === "bugs") showBugsView(); else openPlayerView(k);
   }));
 }
 
@@ -1487,11 +1529,62 @@ async function loadPlayerSuiteProgress() {
     </button>`;
   }).join("");
   list.querySelectorAll(".ws-fail-row").forEach(b => b.addEventListener("click", () => {
-    openPlayerView(b.dataset.suite);
-    plOpenId = Number(b.dataset.id);
-    setTimeout(() => { const c = document.querySelector("#playerView .pl-card.open"); if (c) c.scrollIntoView({ behavior: "smooth", block: "center" }); }, 900);
+    bgOpenTc(b.dataset.suite, b.dataset.id);
   }));
 }
+
+// ===== Stranica Bugovi =====
+let bgRows = [], bgFilter = "all";
+function bgOpenTc(suite, id) {
+  openPlayerView(suite);
+  plOpenId = Number(id);
+  setTimeout(() => { const c = document.querySelector("#playerView .pl-card.open"); if (c) c.scrollIntoView({ behavior: "smooth", block: "center" }); }, 900);
+}
+async function showBugsView() {
+  document.querySelectorAll("#mainContent > div").forEach(d => d.classList.add("hidden"));
+  document.getElementById("mainContent").classList.remove("hidden");
+  document.getElementById("bugsView").classList.remove("hidden");
+  renderSideNav("bugs");
+  const sel = document.getElementById("bgSuite");
+  if (sel.options.length === 1) WS_SUITES.forEach(({ suite }) => sel.add(new Option(PL_SUITES[suite] ? PL_SUITES[suite].name : suite, suite)));
+  document.getElementById("bgList").innerHTML = `<div class="ws-empty" style="margin:16px">Učitavam…</div>`;
+  try { bgRows = await api("/api/player-tcs/bugs"); }
+  catch (e) { document.getElementById("bgList").innerHTML = `<div class="ws-empty" style="margin:16px">Ne mogu učitati bugove: ${escapeHtml(e.message)}</div>`; return; }
+  renderBugs();
+}
+function renderBugs() {
+  const suite = document.getElementById("bgSuite").value;
+  const isFail = t => t.done_at && t.done_result === "fail";
+  const rows = bgRows.filter(t => (!suite || t.suite === suite) &&
+    (bgFilter === "all" || (bgFilter === "fail" && isFail(t)) || (bgFilter === "bug" && plBugList(t.bug_links).length)));
+  document.getElementById("bgCount").textContent = `${rows.length} ${rows.length === 1 ? "TC" : "TC-ova"}`;
+  const list = document.getElementById("bgList");
+  if (!rows.length) { list.innerHTML = `<div class="ws-empty" style="margin:16px">Nema TC-ova za ovaj filter.</div>`; return; }
+  list.innerHTML = rows.map(t => {
+    const st = isFail(t) ? `<span class="bg-status fail">✕ Palo</span>` : (t.done_at ? `<span class="bg-status pass">✓ Prošlo</span>` : `<span class="bg-status none">Netestirano</span>`);
+    const links = plBugList(t.bug_links).map(b => `<a href="${escapeHtml(b.url)}" target="_blank" rel="noopener">${escapeHtml(b.key)} ↗</a>`).join("");
+    const sname = PL_SUITES[t.suite] ? PL_SUITES[t.suite].name : t.suite;
+    const who = t.done_at ? ` · ${escapeHtml(String(t.done_by || "").split(" ")[0])} · ${escapeHtml(wsFmt(t.done_at))}` : "";
+    return `<div class="bg-row" role="button" tabindex="0" data-suite="${escapeHtml(t.suite)}" data-id="${t.id}">
+      ${st}
+      <span class="ws-fail-code">${escapeHtml(t.tc_code || "#" + t.id)}</span>
+      <div class="bg-main"><div class="bg-title">${escapeHtml(t.title)}</div><div class="bg-meta">${escapeHtml(sname)} · ${escapeHtml(t.module)}${who}</div></div>
+      <div class="bg-links">${links}</div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".bg-row").forEach(r => {
+    const go = () => bgOpenTc(r.dataset.suite, r.dataset.id);
+    r.addEventListener("click", e => { if (!e.target.closest("a")) go(); });
+    r.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+}
+document.querySelectorAll("#bugsView [data-bgf]").forEach(b => b.addEventListener("click", () => {
+  bgFilter = b.dataset.bgf;
+  document.querySelectorAll("#bugsView [data-bgf]").forEach(x => x.classList.toggle("active", x === b));
+  renderBugs();
+}));
+document.getElementById("bgSuite").addEventListener("change", renderBugs);
+document.getElementById("wsAllBugsBtn").addEventListener("click", showBugsView);
 
 async function showHome() {
   document.getElementById("releaseView").classList.add("hidden");
@@ -1499,8 +1592,8 @@ async function showHome() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("homeView").classList.remove("hidden");
   renderSideNav("home");
@@ -1716,8 +1809,8 @@ async function openRelease(release) {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("releaseView").classList.remove("hidden");
   document.getElementById("statusFilter").value = "";
@@ -1975,8 +2068,8 @@ async function openFeatureDetail(id) {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("featureDetailView").classList.remove("hidden");
   renderFeatureDetail();
@@ -2261,8 +2354,8 @@ async function openTestPlanBuilder(id) {
   document.getElementById("homeView").classList.add("hidden");
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
@@ -2277,8 +2370,8 @@ function openTestSuitesView() {
   document.getElementById("releaseView").classList.add("hidden");
   document.getElementById("featureDetailView").classList.add("hidden");
   document.getElementById("testPlanBuilderView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("testSuitesView").classList.remove("hidden");
@@ -2328,8 +2421,8 @@ function openPlayerView(suite) {
   document.getElementById("featureDetailView").classList.add("hidden");
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("mainContent").classList.remove("hidden");
   document.getElementById("playerView").classList.remove("hidden");
   // Browser zna autofillati username u polje za pretragu - očisti ga pri svakom otvaranju
@@ -2471,7 +2564,7 @@ function openSettingsPage() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("settingsView").classList.remove("hidden");
   document.getElementById("setCpUsername").value = currentUser ? currentUser.username : "";
   document.getElementById("setCpCurrent").value = "";
@@ -2489,8 +2582,8 @@ function openReportingPage() {
   document.getElementById("testPlanBuilderView").classList.add("hidden");
   document.getElementById("testSuitesView").classList.add("hidden");
   document.getElementById("playerView").classList.add("hidden");
-  document.getElementById("settingsView").classList.add("hidden");
-  document.getElementById("reportingView").classList.add("hidden");
+  document.getElementById("settingsView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
+  document.getElementById("reportingView").classList.add("hidden"); document.getElementById("bugsView").classList.add("hidden");
   document.getElementById("reportingView").classList.remove("hidden");
   loadReportingSprint();
 }
@@ -2716,7 +2809,7 @@ function renderPlayerTcs() {
 // Jira bugovi na TC-u: "link ili ključ" po redu -> [{ url, key }]
 const PL_JIRA_BASE = "https://mediastreamag.atlassian.net/browse/";
 function plBugList(v) {
-  return String(v || "").split(/[\r\n]+/).map(s => s.trim()).filter(Boolean).map(s => {
+  return String(v || "").split(/[\r\n,;]+/).map(s => s.trim()).filter(Boolean).map(s => {
     if (/^https?:\/\//i.test(s)) {
       const m = s.match(/([A-Z][A-Z0-9]+-\d+)/);
       return { url: s, key: m ? m[1] : s.replace(/^https?:\/\//i, "").slice(0, 30) };
